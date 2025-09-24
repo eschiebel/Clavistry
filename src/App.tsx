@@ -27,6 +27,45 @@ export default function App() {
     pulseRef.current = pulse
   }, [pulse])
   
+  // Rhythm selection
+  const RHYTHM_OPTIONS = useMemo(
+    () => [
+      { label: 'Bembé', file: 'bembe.json' },
+      { label: 'Guaguancó', file: 'guaguanco.json' },
+    ],
+    [],
+  )
+  // Helper to normalize names (strip .json and accents, lowercase)
+  function toBaseName(name: string) {
+    const n = name.replace(/\.json$/i, '')
+    // Basic accent stripping for our known names
+    return n
+      .toLowerCase()
+      .replace(/é/g, 'e')
+      .replace(/ó/g, 'o')
+  }
+  const rhythmMap = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const opt of RHYTHM_OPTIONS) {
+      m.set(toBaseName(opt.file), opt.file)
+      m.set(toBaseName(opt.label), opt.file)
+    }
+    return m
+  }, [RHYTHM_OPTIONS])
+
+  // Initialize selection from URL param 'rhythm', fallback to bembe.json
+  const [selectedRhythmFile, setSelectedRhythmFile] = useState(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      const q = sp.get('rhythm')
+      if (q) {
+        const key = toBaseName(q)
+        const file = rhythmMap.get(key) || `${key}.json`
+        if (file && rhythmMap.get(toBaseName(file))) return rhythmMap.get(toBaseName(file)) as string
+      }
+    } catch {}
+    return 'bembe.json'
+  })
   const matrix = useMemo(() => (rhythm ? buildPulseMatrix(rhythm) : null), [rhythm])
 
   const pulseIds = useMemo(() => {
@@ -67,21 +106,57 @@ export default function App() {
     )
   }, [matrix?.totalPulses])
 
-  // Load example rhythm once
   useEffect(() => {
     ;(async () => {
       try {
-        const res = await fetch('/rhythms/bembe.json')
+        const res = await fetch(`/rhythms/${selectedRhythmFile}`)
         if (!res.ok) throw new Error(`Failed to load rhythm: ${res.status}`)
-        const data = (await res.json()) as RhythmJSON
-        const parsed = parseRhythm(data)
+        const json = (await res.json()) as RhythmJSON & { initial_state?: Record<string, unknown> }
+        const parsed = parseRhythm(json)
         setRhythm(parsed)
+        // Reset transport position on rhythm change
+        setPulse(0)
+        pulseRef.current = 0
+
+        // Apply optional initial_state to mixer (set mutes and volumes)
+        if (json.initial_state && typeof json.initial_state === 'object') {
+          setInstrumentSettings(prev => {
+            const next = { ...prev }
+            for (const [inst, rawVal] of Object.entries(json.initial_state!)) {
+              const existing = next[inst] ?? { vol: 1.0, mute: false }
+              let mute = existing.mute
+              let vol = existing.vol
+
+              if (typeof rawVal === 'number') {
+                vol = rawVal
+              } else if (typeof rawVal === 'boolean') {
+                mute = Boolean(rawVal)
+              } else if (rawVal && typeof rawVal === 'object') {
+                const obj = rawVal as { mute?: boolean | string; vol?: number }
+                if (typeof obj.mute === 'boolean') mute = obj.mute
+                if (typeof obj.vol === 'number') vol = obj.vol
+              }
+
+              next[inst] = { vol, mute }
+            }
+            return next
+          })
+        }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
       }
     })()
-  }, [])
+  }, [selectedRhythmFile])
+
+  // Keep URL param in sync with selection (use replaceState to avoid history spam)
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.set('rhythm', toBaseName(selectedRhythmFile))
+      window.history.replaceState({}, '', url)
+    } catch {}
+  }, [selectedRhythmFile])
 
   // Cleanup audio on unmount
   useEffect(() => {
@@ -323,9 +398,23 @@ export default function App() {
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', padding: 24}}>
       <h1>Clavistry</h1>
-      <p>A drum machine for hand-drum ensemble rhythms using Elementary Audio.</p>
+      <p>A drum machine for hand-drum ensemble rhythms.</p>
 
       <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}}>
+        <label style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
+          Rhythm
+          <select
+            value={selectedRhythmFile}
+            onChange={e => setSelectedRhythmFile(e.target.value)}
+            style={{padding: '4px 6px'}}
+          >
+            {RHYTHM_OPTIONS.map(opt => (
+              <option key={opt.file} value={opt.file}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="button" onClick={start} disabled={started}>
           Start
         </button>
@@ -511,10 +600,6 @@ export default function App() {
       ) : (
         <div>Loading rhythm...</div>
       )}
-
-      <p style={{marginTop: 16}}>
-        Next: schedule strokes from the tablature and map symbols to synthesized/sampled voices.
-      </p>
     </div>
   )
 }

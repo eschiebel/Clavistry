@@ -1,0 +1,14 @@
+{
+  "name": "Guaguancó",
+  "time_signature": "8/8",
+  "parts": {
+    "clave": "|x..x...x|..x.x...|",
+    "palitos": "|x.xx.x.x|x.x.xx.x|",
+    "palitos2": "|xx.xxx.x|x.x.xx.x|",
+    "conga": "|.ttB.ttt|T.tT.ttt|",
+    "tumba": "|pt.BM.T.|pt.MB.T.|"
+  },
+  "initial_state": {
+    "palitos2": { "mute": true }
+  }
+}
