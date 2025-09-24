@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/audio/voices.ts","./src/rhythm/parser.ts","./src/rhythm/sequence.ts","./src/rhythm/types.ts"],"version":"5.9.2"}

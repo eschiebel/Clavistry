@@ -1,6 +1,18 @@
 # Clavistry
 
-React + TypeScript + Vite app using Elementary Audio, per `# DrumsElementary.md`.
+A web app for playing Afro-Caribbean rhythms defined in tablature JSON.
+
+This is very much a work in progress.
+
+FWIW, GPT-5 wrote almost all of the code. I have mixed emotions. I was looking forward to working on this
+project, but with AI help I got a working app in an afternoon. I guesss this is what it means to be
+a software engineer now.
+
+## TODO
+- needs tests
+- need a way to upload rhythm json
+- I might want to use samples rather than synthesized voices
+- More stuff I haven't thought of yet
 
 ## Stack
 - Bun (runtime and package manager)
@@ -26,7 +38,7 @@ See `public/rhythms/bembe.json` and the notes in `# DrumsElementary.md`.
 Example structure:
 ```json
 {
-  "name": "bembe",
+  "name": "Bembe",
   "time_signature": "6/8",
   "parts": {
     "bell": "|x.x.xx|.x.x.x|",
@@ -37,7 +49,3 @@ Example structure:
 }
 ```
 
-## Next Steps
-- Parse tablature JSON and schedule events.
-- Map stroke symbols (T, s, M, B, p, t, x, ., |) to synthesized or sampled voices.
-- Build transport (tempo, start/stop, loop) and mixer UI.

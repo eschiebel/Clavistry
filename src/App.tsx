@@ -12,8 +12,12 @@ export default function App() {
   const compressorRef = useRef<DynamicsCompressorNode | null>(null)
   const outputGainRef = useRef<GainNode | null>(null)
   const [masterVol, setMasterVol] = useState(1.6) // linear gain
+  // Mixer: per-instrument settings and nodes
+  const [instrumentSettings, setInstrumentSettings] = useState<Record<string, { vol: number; mute: boolean }>>({})
+  const mixerNodesRef = useRef<Map<string, GainNode>>(new Map())
   const [rendererReady, setRendererReady] = useState<'idle' | 'ok' | 'failed'>('idle')
   const [started, setStarted] = useState(false)
+  const [paused, setPaused] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [rhythm, setRhythm] = useState<ParsedRhythm | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -33,6 +37,26 @@ export default function App() {
         : Math.random().toString(36).slice(2),
     )
   }, [matrix?.totalPulses])
+
+  // Initialize mixer settings when matrix changes (add missing instruments)
+  useEffect(() => {
+    if (!matrix) return
+    setInstrumentSettings(prev => {
+      const next = { ...prev }
+      for (const row of matrix.rows) {
+        if (!next[row.instrument]) {
+          next[row.instrument] = { vol: 1.0, mute: false }
+        }
+      }
+      // Optionally prune removed instruments
+      for (const key of Object.keys(next)) {
+        if (!matrix.rows.find(r => r.instrument === key)) {
+          delete next[key]
+        }
+      }
+      return next
+    })
+  }, [matrix])
 
   const headerIds = useMemo(() => {
     const count = matrix?.totalPulses ?? 0
@@ -155,7 +179,27 @@ export default function App() {
       masterGainRef.current.connect(compressorRef.current)
       compressorRef.current.connect(outputGainRef.current)
       outputGainRef.current.connect(ctx.destination)
+
+      // Ensure per-instrument mixer nodes exist and are connected
+      if (matrix) {
+        for (const row of matrix.rows) {
+          if (!mixerNodesRef.current.has(row.instrument)) {
+            const g = ctx.createGain()
+            const setting = instrumentSettings[row.instrument] ?? { vol: 1.0, mute: false }
+            g.gain.value = setting.mute ? 0 : setting.vol
+            g.connect(masterGainRef.current)
+            mixerNodesRef.current.set(row.instrument, g)
+          } else {
+            const g = mixerNodesRef.current.get(row.instrument)!
+            try { g.disconnect() } catch {}
+            g.connect(masterGainRef.current)
+            const setting = instrumentSettings[row.instrument] ?? { vol: 1.0, mute: false }
+            g.gain.value = setting.mute ? 0 : setting.vol
+          }
+        }
+      }
     }
+    setPaused(false)
     setStarted(true)
   }
 
@@ -181,7 +225,22 @@ export default function App() {
       try { outputGainRef.current.disconnect() } catch {}
       outputGainRef.current = null
     }
+    // Disconnect and clear mixer nodes
+    for (const [, node] of mixerNodesRef.current) {
+      try { node.disconnect() } catch {}
+    }
+    mixerNodesRef.current.clear()
+    // Reset UI to beginning
+    setPulse(0)
+    pulseRef.current = 0
     setStarted(false)
+    setPaused(false)
+  }
+
+  function pause() {
+    // Do not tear down audio nodes; simply stop advancing
+    setStarted(false)
+    setPaused(true)
   }
 
   // Lookahead scheduler: schedule audio using AudioContext time with short lookahead
@@ -205,19 +264,33 @@ export default function App() {
         try { await ctx.resume() } catch {}
       }
 
+      // If transport is not started, either pause (hold) or stop (reset)
+      if (!started) {
+        if (paused) {
+          // Hold current position and keep scheduler aligned with clock
+          nextNoteTime = ctx.currentTime
+          return
+        } else {
+          nextIndex = 0
+          setPulse(0)
+          nextNoteTime = ctx.currentTime
+          return
+        }
+      }
+
       while (nextNoteTime < ctx.currentTime + LOOKAHEAD_SEC) {
         // UI update in sync with scheduled note
         nextIndex = (nextIndex + 1) % modulo
         setPulse(nextIndex)
 
-        if (started) {
-          const dest = masterGainRef.current ?? ctx.destination
-          const when = nextNoteTime
-          for (const row of matrix.rows) {
-            const sym = row.symbols[nextIndex]
-            if (sym && sym !== '|' && sym !== '.') {
-              triggerVoice(ctx, dest, row.instrument, sym as any, when)
-            }
+        const destDefault = masterGainRef.current ?? ctx.destination
+        const when = nextNoteTime
+        for (const row of matrix.rows) {
+          const sym = row.symbols[nextIndex]
+          if (sym && sym !== '|' && sym !== '.') {
+            const node = mixerNodesRef.current.get(row.instrument)
+            const dest = node ?? destDefault
+            triggerVoice(ctx, dest, row.instrument, sym as any, when)
           }
         }
         nextNoteTime += secondsPerPulse
@@ -226,7 +299,7 @@ export default function App() {
 
     const id = setInterval(tick, TICK_MS)
     return () => clearInterval(id)
-  }, [bpm, rhythm, matrix, started])
+  }, [bpm, rhythm, matrix, started, paused])
 
   // Apply master volume changes dynamically (post-compressor output gain)
   useEffect(() => {
@@ -235,34 +308,34 @@ export default function App() {
     }
   }, [masterVol])
 
+  // Apply instrument settings (vol/mute) dynamically
+  useEffect(() => {
+    const ctx = audioCtxRef.current
+    if (!ctx) return
+    for (const [name, node] of mixerNodesRef.current) {
+      const s = instrumentSettings[name]
+      if (!s) continue
+      node.gain.value = s.mute ? 0 : s.vol
+    }
+  }, [instrumentSettings])
+
 
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', padding: 24}}>
-      <h1>DrumsElementary</h1>
+      <h1>Clavistry</h1>
       <p>A drum machine for hand-drum ensemble rhythms using Elementary Audio.</p>
 
       <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}}>
         <button type="button" onClick={start} disabled={started}>
           Start
         </button>
-        <button type="button" onClick={stop} disabled={!started}>
+        <button type="button" onClick={pause} disabled={!started}>
+          Pause
+        </button>
+        <button type="button" onClick={stop} disabled={!(started || paused)}>
           Stop
         </button>
-        <button
-          type="button"
-          onClick={async () => {
-            // Quick diagnostic ping
-            const ctx = audioCtxRef.current ?? rendererRef.current?.context ?? null
-            if (!ctx) return
-            if (ctx.state !== 'running') {
-              try { await ctx.resume() } catch {}
-            }
-            const dest = masterGainRef.current ?? ctx.destination
-            triggerVoice(ctx, dest, 'bell', 'x' as any)
-          }}
-        >
-          Test Sound
-        </button>
+        
         <label style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
           Tempo (BPM)
           <input
@@ -289,8 +362,61 @@ export default function App() {
         </label>
       </div>
       <div style={{fontSize: 12, opacity: 0.7, marginBottom: 8}}>
-        Transport: {started ? 'started' : 'stopped'} · Audio: {audioCtxRef.current?.state ?? 'uninitialized'} · Elementary: {rendererRef.current ? 'ready' : rendererReady}
+        Transport: {started ? 'started' : (paused ? 'paused' : 'stopped')} · Audio: {audioCtxRef.current?.state ?? 'uninitialized'} · Elementary: {rendererRef.current ? 'ready' : rendererReady}
       </div>
+
+      {matrix && (
+        <div style={{
+          background: '#0f1430',
+          border: '1px solid #2b355f',
+          borderRadius: 8,
+          padding: 10,
+          marginBottom: 12,
+        }}>
+          <div style={{fontWeight: 600, marginBottom: 6}}>Mixer</div>
+          <div style={{display: 'grid', gridTemplateColumns: '160px 60px 220px', gap: 8, alignItems: 'center'}}>
+            <div style={{opacity: 0.7}}>Instrument</div>
+            <div style={{opacity: 0.7}}>Mute</div>
+            <div style={{opacity: 0.7}}>Volume</div>
+            {matrix.rows.map(row => {
+              const s = instrumentSettings[row.instrument] ?? { vol: 1.0, mute: false }
+              return (
+                <>
+                  <div style={{fontWeight: 500}}>{row.instrument}</div>
+                  <div>
+                    <label style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
+                      <input
+                        type="checkbox"
+                        checked={!!s.mute}
+                        onChange={e => setInstrumentSettings(prev => ({
+                          ...prev,
+                          [row.instrument]: { ...s, mute: e.target.checked },
+                        }))}
+                      />
+                      <span>Mute</span>
+                    </label>
+                  </div>
+                  <div style={{display: 'inline-flex', gap: 8, alignItems: 'center'}}>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1.5}
+                      step={0.05}
+                      value={s.vol}
+                      onChange={e => setInstrumentSettings(prev => ({
+                        ...prev,
+                        [row.instrument]: { ...s, vol: Number(e.target.value) },
+                      }))}
+                      style={{width: 180}}
+                    />
+                    <span style={{width: 40, textAlign: 'right'}}>{Math.round(s.vol * 100)}%</span>
+                  </div>
+                </>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {error && <div style={{color: '#ffb4b4', marginBottom: 12}}>Error: {error}</div>}
 
