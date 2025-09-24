@@ -1,0 +1,10 @@
+{
+  "name": "bembe",
+  "time_signature": "6/8",
+  "parts": {
+    "bell": "|x.x.xx|.x.x.x|",
+    "quinto": "|ts.tTT|ts.tTT|",
+    "conga": "|ptT.s.|ptT.s.|",
+    "tumba": "|T.BBtt|T.BBtt|"
+  }
+}
