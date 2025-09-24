@@ -1,7 +1,7 @@
 # DrumsElementary
 
 - This project uses
-  - bun as the runtime/package manager
+  - Node.js (>=18) and npm as the runtime and package manager
   - typescript for development
   - biome for linting and formatting
   - elementary audio for generating drum sounds
