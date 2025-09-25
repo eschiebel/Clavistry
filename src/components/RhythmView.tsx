@@ -15,27 +15,13 @@ export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: 
     <div className="rhythm-card">
       <h2 style={{marginTop: 0}}>{rhythm.name}</h2>
       <div>
-        Time Signature: {rhythm.timeSignature.numerator}/{rhythm.timeSignature.denominator}
+        <span>
+          Time Signature: {rhythm.timeSignature.numerator}/{rhythm.timeSignature.denominator}
+        </span>
+        <span style={{marginLeft: '16px'}}>Pulses per Measure: {rhythm.pulsesPerMeasure}</span>
       </div>
-      <div>Pulses per Measure: {rhythm.pulsesPerMeasure}</div>
 
-      {/* Pulse badges with standalone measure separators */}
-      <div className="pulse-badges">
-        {new Array(matrix.totalPulses).fill(0).map((_, i) => (
-          <Fragment key={pulseIds[i]}>
-            <div
-              className={`pulse-badge${i === currentPulse ? ' is-current' : ''}`}
-              title={`Pulse ${i + 1}`}
-            >
-              {i + 1}
-            </div>
-            {(i + 1) % rhythm.pulsesPerMeasure === 0 && i + 1 < matrix.totalPulses && (
-              <div key={`sep-after-${pulseIds[i]}`} className="pulse-sep" aria-hidden="true" />
-            )}
-          </Fragment>
-        ))}
-      </div>
-      <h3>Tablature (full pattern)</h3>
+      <h3>Tablature</h3>
       {/* Grid with narrow separator columns after each measure */}
       {(() => {
         const cols: string[] = ['160px']

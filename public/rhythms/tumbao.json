@@ -5,6 +5,18 @@
   "parts": {
     "clave": "|x..x..x.|..x.x...|",
     "quinto": "|ptstptTT|pts..tTT|",
-    "conga": "|........|...TT...|"
+    "conga": "|........|...TT...|",
+    "cowbell open": "|x...x...|x...x...|",
+    "cowbell closed": "|..xx..xx|..x...xx|"
+  },
+  "initial_state": {
+    "tempo": 144,
+    "mixer": {
+      "clave": { "vol": 1.0, "mute": false },
+      "quinto": { "vol": 1.0, "mute": false },
+      "conga": { "vol": 1.0, "mute": false },
+      "cowbell open": { "vol": 0.25, "mute": false },
+      "cowbell closed": { "vol": 0.25, "mute": false }
+    }
   }
 }

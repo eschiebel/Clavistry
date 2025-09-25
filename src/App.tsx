@@ -4,7 +4,8 @@ import type {ParsedRhythm, RhythmJSON} from './rhythm/types'
 import {parseRhythm} from './rhythm/parser'
 import {buildPulseMatrix} from './rhythm/sequence'
 import {triggerVoice, type StrokeSymbol} from './audio/voices'
-import {toBaseName, loadRhythm, getMeterInfo} from './utils'
+import {toBaseName, loadRhythm, getMeterInfo, type SourceMode} from './utils'
+import {tryPlaySample} from './audio/samples'
 import {Mixer} from './components/Mixer'
 import {RhythmView} from './components/RhythmView'
 
@@ -17,7 +18,7 @@ export default function App() {
   const [masterVol, setMasterVol] = useState(1.6) // linear gain
   // Mixer: per-instrument settings and nodes
   const [instrumentSettings, setInstrumentSettings] = useState<
-    Record<string, {vol: number; mute: boolean}>
+    Record<string, {vol: number; mute: boolean; source?: SourceMode}>
   >({})
   const mixerNodesRef = useRef<Map<string, GainNode>>(new Map())
   const [rendererReady, setRendererReady] = useState<'idle' | 'ok' | 'failed'>('idle')
@@ -98,7 +99,7 @@ export default function App() {
       const next = {...prev}
       for (const row of matrix.rows) {
         if (!next[row.instrument]) {
-          next[row.instrument] = {vol: 1.0, mute: false}
+          next[row.instrument] = {vol: 1.0, mute: false, source: 'auto'}
         }
       }
       // Optionally prune removed instruments
@@ -263,7 +264,11 @@ export default function App() {
         for (const row of matrix.rows) {
           if (!mixerNodesRef.current.has(row.instrument)) {
             const g = ctx.createGain()
-            const setting = instrumentSettings[row.instrument] ?? {vol: 1.0, mute: false}
+            const setting = instrumentSettings[row.instrument] ?? {
+              vol: 1.0,
+              mute: false,
+              source: 'auto',
+            }
             g.gain.value = setting.mute ? 0 : setting.vol
             g.connect(masterGainRef.current)
             mixerNodesRef.current.set(row.instrument, g)
@@ -274,7 +279,11 @@ export default function App() {
               g.disconnect()
             } catch {}
             g.connect(masterGainRef.current)
-            const setting = instrumentSettings[row.instrument] ?? {vol: 1.0, mute: false}
+            const setting = instrumentSettings[row.instrument] ?? {
+              vol: 1.0,
+              mute: false,
+              source: 'auto',
+            }
             g.gain.value = setting.mute ? 0 : setting.vol
           }
         }
@@ -380,7 +389,17 @@ export default function App() {
           if (sym && sym !== '|' && sym !== '.') {
             const node = mixerNodesRef.current.get(row.instrument)
             const dest = node ?? destDefault
-            triggerVoice(ctx, dest, row.instrument, sym as StrokeSymbol, when)
+            const s = instrumentSettings[row.instrument]
+            const mode: SourceMode = s?.source ?? 'auto'
+            const stroke = sym as StrokeSymbol
+            let usedSample = false
+            if (mode === 'sample' || mode === 'auto') {
+              // Attempt to play sample; tryPlaySample returns true if it will play
+              usedSample = tryPlaySample(ctx, dest, row.instrument, stroke, when)
+            }
+            if (!usedSample || mode === 'synth') {
+              triggerVoice(ctx, dest, row.instrument, stroke, when)
+            }
           }
         }
         nextNoteTime += secondsPerPulse
@@ -389,7 +408,7 @@ export default function App() {
 
     const id = setInterval(tick, TICK_MS)
     return () => clearInterval(id)
-  }, [bpm, rhythm, matrix, started, paused])
+  }, [bpm, rhythm, matrix, started, paused, instrumentSettings])
 
   // Apply master volume changes dynamically (post-compressor output gain)
   useEffect(() => {
@@ -442,6 +461,26 @@ export default function App() {
     }
   }, [matrix, instrumentSettings])
 
+  const renderRhythmView = () => {
+    if (error) {
+      return <div style={{color: '#ffb4b4', marginBottom: 12}}>Error: {error}</div>
+    }
+
+    if (rhythm && matrix) {
+      return (
+        <RhythmView
+          rhythm={rhythm}
+          matrix={matrix}
+          currentPulse={pulse}
+          pulseIds={pulseIds}
+          headerIds={headerIds}
+        />
+      )
+    }
+
+    return <div>Loading rhythm...</div>
+  }
+
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', padding: 24}}>
       <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
@@ -460,9 +499,10 @@ export default function App() {
             fill="#3e2f1c"
           />
         </svg>
-        <h1>Clavistry</h1>
+        <h1 style={{marginBottom: '0'}}>Clavistry</h1>
       </div>
-      <p>A drum machine for hand-drum ensemble rhythms.</p>
+      <div style={{margin: '.5rem 0 1rem'}}>A drum machine for Afro-Caribbean drum ensembles.</div>
+      <hr style={{border: 0, borderBottom: '1px solid #2b355f', marginBottom: '1rem'}} />
 
       <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}}>
         <label style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
@@ -520,26 +560,14 @@ export default function App() {
         {rendererRef.current ? 'ready' : rendererReady}
       </div>
 
+      {renderRhythmView()}
+
       {matrix && (
         <Mixer
           matrix={matrix}
           instrumentSettings={instrumentSettings}
           setInstrumentSettings={setInstrumentSettings}
         />
-      )}
-
-      {error && <div style={{color: '#ffb4b4', marginBottom: 12}}>Error: {error}</div>}
-
-      {rhythm && matrix ? (
-        <RhythmView
-          rhythm={rhythm}
-          matrix={matrix}
-          currentPulse={pulse}
-          pulseIds={pulseIds}
-          headerIds={headerIds}
-        />
-      ) : (
-        <div>Loading rhythm...</div>
       )}
     </div>
   )

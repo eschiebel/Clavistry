@@ -12,6 +12,15 @@
     "tumba": "|B.B.B.B.|B.BT..B."
   },
   "initial_state": {
-    "tempo": 144
+    "tempo": 144,
+    "mixer": {
+      "agogo bell1 high": { "vol": 0.75, "mute": false },
+      "agogo bell1 low": { "vol": 0.75, "mute": false },
+      "agogo bell2 high": { "vol": 0.75, "mute": false },
+      "agogo bell2 low": { "vol": 0.75, "mute": false },
+      "quinto": { "vol": 1.0, "mute": false },
+      "conga": { "vol": 1.0, "mute": false },
+      "tumba": { "vol": 1.0, "mute": false }
+    }
   }
 }

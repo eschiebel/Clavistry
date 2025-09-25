@@ -1,0 +1,19 @@
+{
+  "bell:x": { "file": "/samples/bell/hoe.wav", "gain": -3 },
+  "clave:x": { "file": "/samples/clave/rumba-clave.wav" },
+  "quinto:T": { "file": "/samples/quinto/quinto-tone.wav" },
+  "quinto:s": { "file": "/samples/quinto/quinto-slap.wav" },
+  "conga:T": { "file": "/samples/conga/conga-tone.wav" },
+  "conga:s": { "file": "/samples/conga/conga-slap.wav" },
+  "conga:m": { "file": "/samples/conga/conga-muff.wav" },
+  "tumba:B": { "file": "/samples/tumba/tumba-bass.wav" },
+  "tumba:T": { "file": "/samples/tumba/tumba-tone.wav" },
+  "tumba:m": { "file": "/samples/tumba/tumba-muff.wav" },
+  "tumba:s": { "file": "/samples/tumba/tumba-slap.wav" },
+  "agogo bell1 high:x": { "file": "/samples/bell/agogo-high.wav" },
+  "agogo bell1 low:x": { "file": "/samples/bell/agogo-low.wav" },
+  "agogo bell2 high:x": { "file": "/samples/bell/agogo-high.wav" },
+  "agogo bell2 low:x": { "file": "/samples/bell/agogo-low.wav" },
+  "cowbell open:x": { "file": "/samples/bell/cowbell-open.wav" },
+  "cowbell closed:x": { "file": "/samples/bell/cowbell-closed.wav" }
+}

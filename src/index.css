@@ -28,8 +28,10 @@ button:disabled {
 /* RhythmView */
 .rhythm-card {
   background: #11162a;
+  border: 1px solid #2b355f;
   padding: 12px;
   border-radius: 8px;
+  margin: 12px 0;
 
   .pulse-badges {
     margin-top: 8px;
@@ -111,7 +113,7 @@ button:disabled {
   border: 1px solid #2b355f;
   border-radius: 8px;
   padding: 10px;
-  margin-bottom: 12px;
+  margin: 12px 0;
 
   h2 {
     margin-bottom: 6px;
@@ -119,7 +121,7 @@ button:disabled {
 
   .mixer-grid {
     display: grid;
-    grid-template-columns: 160px 60px 220px;
+    grid-template-columns: 160px 80px 260px 160px;
     gap: 8px;
     align-items: center;
   }

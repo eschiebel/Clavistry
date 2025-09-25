@@ -1,7 +1,8 @@
 import {Fragment} from 'react'
 import type {PulseMatrix} from '../rhythm/sequence'
 
-type InstrumentSettings = Record<string, {vol: number; mute: boolean}>
+type SourceMode = 'auto' | 'sample' | 'synth'
+type InstrumentSettings = Record<string, {vol: number; mute: boolean; source?: SourceMode}>
 
 interface MixerProps {
   matrix: PulseMatrix
@@ -17,6 +18,7 @@ export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: Mixer
         <div className="mixer-header">Instrument</div>
         <div className="mixer-header">Mute</div>
         <div className="mixer-header">Volume</div>
+        <div className="mixer-header">Voice</div>
         {matrix.rows.map(row => {
           const s = instrumentSettings[row.instrument] ?? {vol: 1.0, mute: false}
           return (
@@ -53,6 +55,27 @@ export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: Mixer
                   className="vol-range"
                 />
                 <span className="vol-value">{Math.round(s.vol * 100)}%</span>
+              </div>
+              <div>
+                <label className="source-label" style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
+                  <span>Voice</span>
+                  <select
+                    value={s.source ?? 'auto'}
+                    onChange={e =>
+                      setInstrumentSettings(prev => ({
+                        ...prev,
+                        [row.instrument]: {
+                          ...s,
+                          source: (e.target.value as SourceMode) ?? 'auto',
+                        },
+                      }))
+                    }
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="sample">Sample</option>
+                    <option value="synth">Synth</option>
+                  </select>
+                </label>
               </div>
             </Fragment>
           )
