@@ -110,7 +110,7 @@ export function triggerVoice(
   }
 
   // Simple tom/skin tone: sine with quick decay + slight pitch drop
-  function skin(freq = 180, decay = 0.32, peak = 1.2) {
+  function skin(freq = 180, decay = 0.55, peak = 1.2) {
     const osc = ctx.createOscillator()
     const gWrap = envNode(decay, peak)
     osc.type = 'sine'
@@ -146,15 +146,27 @@ export function triggerVoice(
     osc.stop(gWrap.endTime)
   }
 
-  // Slap: bright noise burst with bandpass
-  function slap(decay = 0.12) {
+  // Slap: warmer noise burst with broader bandpass + a touch of body
+  function slap(decay = 0.14) {
     const n = whiteNoise()
+    // Main bandpass slightly lower and broader for warmth
     const bp = ctx.createBiquadFilter()
     bp.type = 'bandpass'
-    bp.frequency.value = 2500
-    bp.Q.value = 4
+    bp.frequency.value = 1800
+    bp.Q.value = 2.8
+    // Add a subtle lowpass branch to give body to the slap
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 1200
+    // Mix both branches before the envelope
+    const mix = ctx.createGain()
+    mix.gain.value = 1.0
     const gWrap = envNode(decay, 1.0)
-    n.connect(bp).connect(gWrap.node).connect(destination)
+    n.connect(bp)
+    n.connect(lp)
+    bp.connect(mix)
+    lp.connect(mix)
+    mix.connect(gWrap.node).connect(destination)
     n.start(now)
     n.stop(now + decay + 0.02)
   }
@@ -188,6 +200,15 @@ export function triggerVoice(
         woodClick('clave')
       } else if (lower.includes('palitos')) {
         woodClick('palitos')
+      } else if (lower.includes('agogo')) {
+        // Agogo bells: two bells (1 & 2), each with high/low pitches
+        // Typical ranges: low ~800-1000 Hz, high ~1300-1700 Hz
+        const isHigh = lower.includes('high')
+        const which = lower.includes('bell1') ? 1 : lower.includes('bell2') ? 2 : 0
+        const base = isHigh ? 1500 : 900
+        const detune = which === 1 ? -60 : which === 2 ? 60 : 0
+        const freq = Math.max(200, base + detune)
+        bell(freq, 0.55)
       } else {
         bell(baseFreq >= 400 ? baseFreq : 1200, 0.25)
       }
@@ -196,10 +217,11 @@ export function triggerVoice(
       bass(Math.max(50, baseFreq * 0.7), 0.45)
       break
     case 'T':
-      skin(baseFreq, 0.28, 0.9)
+      // Open tone: let it ring a bit longer
+      skin(baseFreq, 0.6, 1.0)
       break
     case 's':
-      slap(0.12)
+      slap(0.16)
       break
     case 'M':
       skin(baseFreq * 0.95, 0.14, 0.6)

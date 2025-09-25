@@ -4,7 +4,7 @@
   "pulses_per_measure": 8,
   "parts": {
     "clave": "|x..x..x.|..x.x...|",
-    "quinto": "|ptstptTT|pts...TT|",
+    "quinto": "|ptstptTT|pts..tTT|",
     "conga": "|........|...TT...|"
   }
 }

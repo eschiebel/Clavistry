@@ -18,11 +18,17 @@ export type InstrumentSetting = {vol: number; mute: boolean}
 export type InstrumentSettingInput = {vol?: number; mute?: boolean}
 
 export function deriveInitialState(json: RhythmJSON): {
-  tempo?: number
+  tempo: number
   mixer: Record<string, InstrumentSetting>
 } {
-  const mixerInput = json.initial_state?.mixer ?? {}
+  const DEFAULT_TEMPO = 120
+  // Start with defaults for all instruments present in the parts
   const mixer: Record<string, InstrumentSetting> = {}
+  for (const inst of Object.keys(json.parts ?? {})) {
+    mixer[inst] = {vol: 1.0, mute: false}
+  }
+  // Overlay any user-provided mixer entries from initial_state
+  const mixerInput = json.initial_state?.mixer ?? {}
   for (const [inst, rawVal] of Object.entries(mixerInput as Record<string, unknown>)) {
     let vol = 1.0
     let mute = false
@@ -34,7 +40,9 @@ export function deriveInitialState(json: RhythmJSON): {
     mixer[inst] = {vol, mute}
   }
   const tempo =
-    typeof json.initial_state?.tempo === 'number' ? json.initial_state?.tempo : undefined
+    typeof json.initial_state?.tempo === 'number' && Number.isFinite(json.initial_state?.tempo)
+      ? (json.initial_state?.tempo as number)
+      : DEFAULT_TEMPO
   return {tempo, mixer}
 }
 

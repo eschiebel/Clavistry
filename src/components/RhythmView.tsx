@@ -1,3 +1,5 @@
+import {Fragment} from 'react'
+import {getMeterInfo} from '../utils'
 import type {ParsedRhythm} from '../rhythm/types'
 import type {PulseMatrix} from '../rhythm/sequence'
 
@@ -8,96 +10,107 @@ interface RhythmViewProps {
   pulseIds: string[]
   headerIds: string[]
 }
-
 export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: RhythmViewProps) {
   return (
-    <div style={{background: '#11162a', padding: 12, borderRadius: 8}}>
+    <div className="rhythm-card">
       <h2 style={{marginTop: 0}}>{rhythm.name}</h2>
       <div>
         Time Signature: {rhythm.timeSignature.numerator}/{rhythm.timeSignature.denominator}
       </div>
       <div>Pulses per Measure: {rhythm.pulsesPerMeasure}</div>
-      <div style={{marginTop: 8, display: 'flex', gap: 6}}>
-        {new Array(matrix?.totalPulses ?? rhythm.pulsesPerMeasure).fill(0).map((_, i) => (
-          <div
-            key={pulseIds[i]}
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 4,
-              display: 'grid',
-              placeItems: 'center',
-              background: i === currentPulse ? '#4675ff' : '#242b49',
-              color: i === currentPulse ? '#fff' : '#aab',
-              fontSize: 12,
-              borderLeft:
-                i > 0 && i % rhythm.pulsesPerMeasure === 0
-                  ? '2px solid #556'
-                  : '1px solid transparent',
-            }}
-            title={`Pulse ${i + 1}`}
-          >
-            {i + 1}
-          </div>
-        ))}
-      </div>
-      <h3>Tablature (full pattern)</h3>
-      {matrix && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `160px repeat(${matrix.totalPulses}, 28px)`,
-            gap: 6,
-            alignItems: 'center',
-          }}
-        >
-          <div style={{opacity: 0.7}}>Instrument</div>
-          {new Array(matrix.totalPulses).fill(0).map((_, i) => (
+
+      {/* Pulse badges with standalone measure separators */}
+      <div className="pulse-badges">
+        {new Array(matrix.totalPulses).fill(0).map((_, i) => (
+          <Fragment key={pulseIds[i]}>
             <div
-              key={headerIds[i]}
-              style={{
-                textAlign: 'center',
-                opacity: 0.7,
-                borderLeft:
-                  i > 0 && i % rhythm.pulsesPerMeasure === 0
-                    ? '2px solid #556'
-                    : '1px solid transparent',
-              }}
+              className={`pulse-badge${i === currentPulse ? ' is-current' : ''}`}
+              title={`Pulse ${i + 1}`}
             >
               {i + 1}
             </div>
-          ))}
-          {matrix.rows.map(row => (
-            <div key={row.instrument} style={{display: 'contents'}}>
-              <div style={{fontWeight: 600}}>{row.instrument}</div>
-              {row.symbols.map((sym, i) => (
-                <div
-                  key={`${row.instrument}-${i}`}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 6,
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: i === currentPulse ? '#2a3a70' : '#1a2140',
-                    border: '1px solid #334',
-                    borderLeft:
-                      i > 0 && i % rhythm.pulsesPerMeasure === 0
-                        ? '2px solid #556'
-                        : '1px solid #334',
-                    color: sym === '.' ? '#556' : '#e9eef5',
-                    fontFamily: 'monospace',
-                    fontSize: 13,
-                  }}
-                  title={`Pulse ${i + 1}: ${sym}`}
-                >
-                  {sym}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+            {(i + 1) % rhythm.pulsesPerMeasure === 0 && i + 1 < matrix.totalPulses && (
+              <div key={`sep-after-${pulseIds[i]}`} className="pulse-sep" aria-hidden="true" />
+            )}
+          </Fragment>
+        ))}
+      </div>
+      <h3>Tablature (full pattern)</h3>
+      {/* Grid with narrow separator columns after each measure */}
+      {(() => {
+        const cols: string[] = ['160px']
+        for (let i = 1; i <= matrix.totalPulses; i++) {
+          cols.push('28px')
+          if (i % rhythm.pulsesPerMeasure === 0 && i < matrix.totalPulses) cols.push('6px')
+        }
+        const gridTemplateColumns = cols.join(' ')
+        return (
+          <div className="rhythm-grid" style={{gridTemplateColumns}}>
+            <div className="header-label">Instrument</div>
+            {(() => {
+              const {pulsesPerBeat, isCompound} = getMeterInfo(
+                rhythm.timeSignature,
+                matrix.pulsesPerMeasure,
+              )
+              const simpleSyllables = ['1', '&']
+              const compoundSyllables = ['1', '&', 'a']
+              const cells: JSX.Element[] = []
+              for (let i = 0; i < matrix.totalPulses; i++) {
+                const posInBeat = i % pulsesPerBeat
+                const syllables = isCompound ? compoundSyllables : simpleSyllables
+                const pulsesIntoMeasure = i % rhythm.pulsesPerMeasure
+                const beatInMeasure = Math.floor(pulsesIntoMeasure / pulsesPerBeat) + 1
+                const label = posInBeat === 0 ? String(beatInMeasure) : (syllables[posInBeat] ?? '')
+                cells.push(
+                  <div key={headerIds[i]} className="header-label">
+                    {label}
+                  </div>,
+                )
+                if ((i + 1) % rhythm.pulsesPerMeasure === 0 && i + 1 < matrix.totalPulses) {
+                  cells.push(
+                    <div
+                      key={`sep-h-after-${headerIds[i]}`}
+                      aria-hidden="true"
+                      className="grid-sep"
+                    />,
+                  )
+                }
+              }
+              return cells
+            })()}
+            {matrix.rows.map(row => (
+              <div key={row.instrument} style={{display: 'contents'}}>
+                <div className="instrument-name">{row.instrument}</div>
+                {row.symbols.map((sym, i) => {
+                  const cell = (
+                    <div
+                      key={`${row.instrument}-${headerIds[i]}`}
+                      className={`grid-cell${i === currentPulse ? ' is-current' : ''}${sym === '.' ? ' is-rest' : ''}`}
+                      title={`Pulse ${i + 1}: ${sym}`}
+                    >
+                      {sym}
+                    </div>
+                  )
+                  const needsSep =
+                    (i + 1) % rhythm.pulsesPerMeasure === 0 && i + 1 < matrix.totalPulses
+                  return needsSep ? (
+                    <Fragment key={`${row.instrument}-wrap-${headerIds[i]}`}>
+                      {cell}
+                      <div
+                        key={`sep-${row.instrument}-after-${headerIds[i]}`}
+                        aria-hidden="true"
+                        className="grid-sep"
+                      />
+                    </Fragment>
+                  ) : (
+                    cell
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        )
+      })()}
     </div>
   )
 }

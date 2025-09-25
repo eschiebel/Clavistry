@@ -39,6 +39,7 @@ export default function App() {
       {label: 'Bembé', file: 'bembe.json'},
       {label: 'Guaguancó', file: 'guaguanco.json'},
       {label: 'Tumbao', file: 'tumbao.json'},
+      {label: 'Conga de Comparsa', file: 'conga_de_comparsa.json'},
     ],
     [],
   )
@@ -130,10 +131,21 @@ export default function App() {
         pulseRef.current = 0
 
         // Apply optional initial_state (tempo and mixer)
+        const DEFAULT_TEMPO = 120
         if (initial) {
           const {tempo, mixer} = initial
-          if (typeof tempo === 'number' && Number.isFinite(tempo)) setBpm(tempo)
-          setInstrumentSettings(prev => ({...prev, ...mixer}))
+          // If tempo is provided, use it; otherwise reset to default
+          if (typeof tempo === 'number' && Number.isFinite(tempo)) {
+            setBpm(tempo)
+          } else {
+            setBpm(DEFAULT_TEMPO)
+          }
+          // Reset mixer to rhythm-provided initial state (or empty), not merged
+          setInstrumentSettings(mixer ?? {})
+        } else {
+          // No initial state: clear mixer and reset tempo to default
+          setInstrumentSettings({})
+          setBpm(DEFAULT_TEMPO)
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
@@ -397,9 +409,59 @@ export default function App() {
     }
   }, [instrumentSettings])
 
+  // Ensure mixer nodes exist and are wired for the current matrix even when switching rhythms mid-play
+  useEffect(() => {
+    const ctx = audioCtxRef.current
+    const master = masterGainRef.current
+    if (!ctx || !matrix || !master) return
+    // Build a set of current instrument names
+    const currentInstruments = new Set(matrix.rows.map(r => r.instrument))
+    // Ensure a node per instrument and connect to master with correct gain
+    for (const row of matrix.rows) {
+      let g = mixerNodesRef.current.get(row.instrument)
+      if (!g) {
+        g = ctx.createGain()
+        mixerNodesRef.current.set(row.instrument, g)
+      } else {
+        try {
+          g.disconnect()
+        } catch {}
+      }
+      g.connect(master)
+      const s = instrumentSettings[row.instrument] ?? {vol: 1.0, mute: false}
+      g.gain.value = s.mute ? 0 : s.vol
+    }
+    // Remove any stale nodes that are no longer present in the matrix
+    for (const [name, node] of mixerNodesRef.current) {
+      if (!currentInstruments.has(name)) {
+        try {
+          node.disconnect()
+        } catch {}
+        mixerNodesRef.current.delete(name)
+      }
+    }
+  }, [matrix, instrumentSettings])
+
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', padding: 24}}>
-      <h1>Clavistry</h1>
+      <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+        <svg
+          className="icon"
+          width="28"
+          height="28"
+          viewBox="0 0 64 64"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <circle cx="32" cy="32" r="32" fill="##fff" />
+          <path
+            d="M32 12c-6 0-12 2-12 4v4c0 1.5 1.5 3 2 4l-2 20c0 6 4 12 12 12s12-6 12-12l-2-20c0-1 2-2.5 2-4v-4c0-2-6-4-12-4zm0 4c4.4 0 8 1.2 8 2s-3.6 2-8 2-8-1.2-8-2 3.6-2 8-2zm-6 10c1 0 2 .5 2 1s-1 1-2 1-2-.5-2-1 1-1 2-1zm12 0c1 0 2 .5 2 1s-1 1-2 1-2-.5-2-1 1-1 2-1zm-6 4c1.1 0 2 .9 2 2v20c0 1.1-.9 2-2 2s-2-.9-2-2V30c0-1.1.9-2 2-2z"
+            fill="#3e2f1c"
+          />
+        </svg>
+        <h1>Clavistry</h1>
+      </div>
       <p>A drum machine for hand-drum ensemble rhythms.</p>
 
       <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12}}>

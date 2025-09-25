@@ -4,9 +4,10 @@
 
   This is very much a work in progress.
 
-  FWIW, GPT-5 wrote almost all of the code. I have mixed emotions. I was looking forward to working on this
-  project, but with AI help I got a working app in an afternoon. I guesss this is what it means to be
-  a software engineer now.
+  FWIW, AI wrote almost all of the code. I have mixed emotions. I was looking forward to working on this
+  project, but with AI's help I got a working app in an afternoon and in a fairly polished state in
+  three days. It wasn't _easy_, but certainly faster than doing it by hand. I know what's going on,
+  but not nearly to the depth if I had done it alone. I guesss this is what it means to be a software engineer now.
 
   ## TODO
   - needs tests
