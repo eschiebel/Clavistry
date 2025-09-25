@@ -9,10 +9,20 @@ export type StrokeSymbol =
   | '.' // rest
   | '|' // bar separator
 
+type MixerInstrumentState = {
+  vol?: number
+  mute?: boolean
+}
+
 export interface RhythmJSON {
   name: string
   time_signature: string // e.g. "6/8"
   parts: Record<string, string> // instrument -> tablature line
+  pulses_per_measure?: number // optional explicit grid resolution per measure
+  initial_state?: {
+    mixer?: Record<string, MixerInstrumentState>
+    tempo?: number
+  }
 }
 
 export interface ParsedPart {

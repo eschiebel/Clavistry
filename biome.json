@@ -3,10 +3,12 @@
   "formatter": {
     "enabled": true,
     "indentWidth": 2,
-    "indentStyle": "space"
+    "indentStyle": "space",
+    "include": ["src/**", "public/**"]
   },
   "linter": {
-    "enabled": true
+    "enabled": true,
+    "include": ["src/**", "public/**"]
   },
   "organizeImports": {
     "enabled": false

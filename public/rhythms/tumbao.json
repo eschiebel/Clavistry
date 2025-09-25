@@ -1,0 +1,10 @@
+{
+  "name": "Tubmao",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "parts": {
+    "clave": "|x..x..x.|..x.x...|",
+    "quinto": "|ptstptTT|pts...TT|",
+    "conga": "|........|...TT...|"
+  }
+}
