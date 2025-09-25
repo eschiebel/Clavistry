@@ -51,3 +51,21 @@ export async function loadRhythm(file: string): Promise<{
   const initial = deriveInitialState(json)
   return {raw: json, parsed, initial}
 }
+
+// Meter utilities
+export type MeterInfo = {
+  isCompound: boolean
+  beatsPerMeasure: number
+  pulsesPerBeat: number
+}
+
+export function getMeterInfo(
+  timeSignature: {numerator: number; denominator: number},
+  pulsesPerMeasure: number,
+): MeterInfo {
+  const {numerator, denominator} = timeSignature
+  const isCompound = denominator === 8 && numerator % 3 === 0
+  const beatsPerMeasure = isCompound ? Math.max(1, Math.floor(numerator / 3)) : Math.max(1, numerator)
+  const pulsesPerBeat = Math.max(1, Math.round(pulsesPerMeasure / beatsPerMeasure))
+  return {isCompound, beatsPerMeasure, pulsesPerBeat}
+}

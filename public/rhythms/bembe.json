@@ -9,7 +9,7 @@
       "conga": { "vol": 1.0, "mute": false },
       "tumba": { "vol": 1.0, "mute": false }
     },
-    "tempo": 200
+    "tempo": 90
   },
   "parts": {
     "bell": "|x.x.xx|.x.x.x|",

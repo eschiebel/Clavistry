@@ -4,7 +4,7 @@ import type {ParsedRhythm, RhythmJSON} from './rhythm/types'
 import {parseRhythm} from './rhythm/parser'
 import {buildPulseMatrix} from './rhythm/sequence'
 import {triggerVoice, type StrokeSymbol} from './audio/voices'
-import {toBaseName, loadRhythm} from './utils'
+import {toBaseName, loadRhythm, getMeterInfo} from './utils'
 import {Mixer} from './components/Mixer'
 import {RhythmView} from './components/RhythmView'
 
@@ -24,6 +24,7 @@ export default function App() {
   const [started, setStarted] = useState(false)
   const [paused, setPaused] = useState(false)
   const [bpm, setBpm] = useState(120)
+  const [bpmInput, setBpmInput] = useState(bpm)
   const [rhythm, setRhythm] = useState<ParsedRhythm | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pulse, setPulse] = useState(0)
@@ -75,6 +76,19 @@ export default function App() {
         : Math.random().toString(36).slice(2),
     )
   }, [matrix?.totalPulses])
+
+  // Debounce UI tempo changes into the effective bpm used by the scheduler
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (Number.isFinite(bpmInput) && bpmInput > 0) setBpm(bpmInput)
+    }, 200)
+    return () => clearTimeout(id)
+  }, [bpmInput])
+
+  // Keep the input display in sync when bpm is changed programmatically (e.g., from JSON)
+  useEffect(() => {
+    setBpmInput(bpm)
+  }, [bpm])
 
   // Initialize mixer settings when matrix changes (add missing instruments)
   useEffect(() => {
@@ -312,10 +326,8 @@ export default function App() {
     const ctx = audioCtxRef.current ?? rendererRef.current?.context ?? null
     if (!ctx) return
 
-    // BPM is in beats (per time_signature denominator). Our grid is pulses_per_measure.
-    // Pulses per beat = pulsesPerMeasure / beatsPerMeasure (numerator).
-    const beatsPerMeasure = rhythm.timeSignature.numerator
-    const pulsesPerBeat = matrix.pulsesPerMeasure / Math.max(1, beatsPerMeasure)
+    // Derive pulses per beat from meter (supports compound meters like 6/8)
+    const {pulsesPerBeat} = getMeterInfo(rhythm.timeSignature, matrix.pulsesPerMeasure)
     const pulsesPerSecond = (bpm / 60) * pulsesPerBeat
     const secondsPerPulse = 1 / pulsesPerSecond
     const LOOKAHEAD_SEC = 0.1 // schedule 100ms ahead
@@ -421,8 +433,8 @@ export default function App() {
             type="number"
             min={30}
             max={240}
-            value={bpm}
-            onChange={e => setBpm(Number(e.target.value))}
+            value={bpmInput}
+            onChange={e => setBpmInput(Number(e.target.value))}
             style={{width: 72}}
           />
         </label>
