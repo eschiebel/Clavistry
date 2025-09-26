@@ -56,7 +56,9 @@ export async function loadRhythm(file: string): Promise<{
   parsed: ReturnType<typeof parseRhythm>
   initial: ReturnType<typeof deriveInitialState>
 }> {
-  const res = await fetch(`/rhythms/${file}`)
+  // @ts-expect-error
+  const rhythmPath = `${import.meta.env.BASE_URL}/rhythms/${file}`
+  const res = await fetch(rhythmPath)
   if (!res.ok) throw new Error(`Failed to load rhythm: ${res.status}`)
   const json = (await res.json()) as RhythmJSON
   const parsed = parseRhythm(json)
