@@ -38,7 +38,9 @@ export default function App() {
   const RHYTHM_OPTIONS = useMemo(
     () => [
       {label: 'Bembé', file: 'bembe.json'},
-      {label: 'Guaguancó', file: 'guaguanco.json'},
+      {label: 'Rumba Yesa', file: 'yesa.json'},
+      {label: 'Rumba Guaguancó', file: 'guaguanco.json'},
+      {label: 'Rumba Columbia', file: 'columbia.json'},
       {label: 'Tumbao', file: 'tumbao.json'},
       {label: 'Conga de Comparsa', file: 'conga_de_comparsa.json'},
     ],

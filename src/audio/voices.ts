@@ -171,8 +171,8 @@ export function triggerVoice(
     n.stop(now + decay + 0.02)
   }
 
-  // Palm/touch: softer noise/skin
-  function palmTouch(decay = 0.08, gain = 0.6) {
+  // Palm/touch: softer noise/skin (quieter overall)
+  function palmTouch(decay = 0.08, gain = 0.4) {
     const n = whiteNoise()
     const lp = ctx.createBiquadFilter()
     lp.type = 'lowpass'
@@ -227,10 +227,10 @@ export function triggerVoice(
       skin(baseFreq * 0.95, 0.14, 0.6)
       break
     case 'p':
-      palmTouch(0.1, 0.5)
+      palmTouch(0.1, 0.1)
       break
     case 't':
-      palmTouch(0.06, 0.4)
+      palmTouch(0.06, 0.05)
       break
   }
 }

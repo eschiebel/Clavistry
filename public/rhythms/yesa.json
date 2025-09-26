@@ -1,0 +1,17 @@
+{
+  "name": "Rumba Yesa",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "parts": {
+    "cowbell open": "|..xx..xx|..xx..xx|",
+    "quinto": "|ssttsstt|ssttsstt|",
+    "conga": "|B...T.BB|.TTT..Bt|",
+    "tumba": "|s.B.TtTB|s..BTtTB|"
+  },
+  "initial_state": {
+    "tempo": 120,
+    "mixer": {
+      "cowbell open": { "vol": 0.75, "mute": false }
+    }
+  }
+}

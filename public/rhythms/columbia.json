@@ -1,0 +1,16 @@
+{
+  "name": "Rumba Columbia",
+  "time_signature": "6/8",
+  "pulses_per_measure": 6,
+  "parts": {
+    "cowbell open": "|x.x.xx|.x.x.x|",
+    "conga": "|ptTT.s|ptTT.s|",
+    "tumba": "|ptstTT|ptstTt|"
+  },
+  "initial_state": {
+    "tempo": 144,
+    "mixer": {
+      "cowbell open": { "vol": 0.4, "mute": false }
+    }
+  }
+}
