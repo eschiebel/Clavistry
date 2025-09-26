@@ -10,7 +10,7 @@
     "check": "biome check .",
     "format": "biome format .",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@elemaudio/core": "*",
