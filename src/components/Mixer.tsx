@@ -57,7 +57,10 @@ export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: Mixer
                 <span className="vol-value">{Math.round(s.vol * 100)}%</span>
               </div>
               <div>
-                <label className="source-label" style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
+                <label
+                  className="source-label"
+                  style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}
+                >
                   <span>Voice</span>
                   <select
                     value={s.source ?? 'auto'}

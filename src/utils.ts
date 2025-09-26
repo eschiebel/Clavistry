@@ -38,7 +38,8 @@ export function deriveInitialState(json: RhythmJSON): {
       const obj = rawVal as InstrumentSettingInput
       if (typeof obj.vol === 'number') vol = obj.vol
       if (typeof obj.mute === 'boolean') mute = obj.mute
-      if (obj.source === 'auto' || obj.source === 'sample' || obj.source === 'synth') source = obj.source
+      if (obj.source === 'auto' || obj.source === 'sample' || obj.source === 'synth')
+        source = obj.source
     }
     mixer[inst] = {vol, mute, source}
   }
@@ -76,7 +77,9 @@ export function getMeterInfo(
 ): MeterInfo {
   const {numerator, denominator} = timeSignature
   const isCompound = denominator === 8 && numerator % 3 === 0
-  const beatsPerMeasure = isCompound ? Math.max(1, Math.floor(numerator / 3)) : Math.max(1, numerator)
+  const beatsPerMeasure = isCompound
+    ? Math.max(1, Math.floor(numerator / 3))
+    : Math.max(1, numerator)
   const pulsesPerBeat = Math.max(1, Math.round(pulsesPerMeasure / beatsPerMeasure))
   return {isCompound, beatsPerMeasure, pulsesPerBeat}
 }
