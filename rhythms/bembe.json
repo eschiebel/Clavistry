@@ -1,0 +1,20 @@
+{
+  "name": "Bembé",
+  "time_signature": "6/8",
+  "pulses_per_measure": 6,
+  "initial_state": {
+    "mixer": {
+      "bell": { "vol": 0.5, "mute": false },
+      "quinto": { "vol": 1.0, "mute": false },
+      "conga": { "vol": 1.0, "mute": false },
+      "tumba": { "vol": 1.0, "mute": false }
+    },
+    "tempo": 90
+  },
+  "parts": {
+    "bell": "|x.x.xx|.x.x.x|",
+    "quinto": "|ts.tTT|ts.tTT|",
+    "conga": "|ptT.s.|ptT.s.|",
+    "tumba": "|T.BBtt|T.BBtt|"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Conta de Comparsa",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "parts": {
+    "agogo bell1 high": "|....x...|....x.x.|",
+    "agogo bell1 low": "|x.x....x|.x......|",
+    "agogo bell2 high": "|x.....x.|...x....|",
+    "agogo bell2 low": "|...x....|x.....x.|",
+    "quinto": "|T..ps..t|s..BT.T.|",
+    "conga": "|ttssttTT|ttssttTT|",
+    "tumba": "|B.B.B.B.|B.BT..B."
+  },
+  "initial_state": {
+    "tempo": 144,
+    "mixer": {
+      "agogo bell1 high": { "vol": 0.75, "mute": false },
+      "agogo bell1 low": { "vol": 0.75, "mute": false },
+      "agogo bell2 high": { "vol": 0.75, "mute": false },
+      "agogo bell2 low": { "vol": 0.75, "mute": false },
+      "quinto": { "vol": 1.0, "mute": false },
+      "conga": { "vol": 1.0, "mute": false },
+      "tumba": { "vol": 1.0, "mute": false }
+    }
+  }
+}
