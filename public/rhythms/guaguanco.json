@@ -2,6 +2,13 @@
   "name": "Guaguancó",
   "time_signature": "4/4",
   "pulses_per_measure": 8,
+  "parts": {
+    "clave": "|x..x...x|..x.x...|",
+    "palitos": "|x.xx.x.x|x.x.xx.x|",
+    "palitos2": "|xx.xxx.x|x.x.xx.x|",
+    "conga": "|.ttB.ttt|T.tT.ttt|",
+    "tumba": "|pt.BM.T.|pt.MB.T.|"
+  },
   "initial_state": {
     "mixer": {
       "clave": { "vol": 1.0, "mute": false },
@@ -10,12 +17,5 @@
       "conga": { "vol": 1.0, "mute": false },
       "tumba": { "vol": 1.0, "mute": false }
     }
-  },
-  "parts": {
-    "clave": "|x..x...x|..x.x...|",
-    "palitos": "|x.xx.x.x|x.x.xx.x|",
-    "palitos2": "|xx.xxx.x|x.x.xx.x|",
-    "conga": "|.ttB.ttt|T.tT.ttt|",
-    "tumba": "|pt.BM.T.|pt.MB.T.|"
   }
 }

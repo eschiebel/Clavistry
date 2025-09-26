@@ -1,6 +1,8 @@
 {
   "bell:x": { "file": "/samples/bell/hoe.wav", "gain": -3 },
-  "clave:x": { "file": "/samples/clave/rumba-clave.wav" },
+  "clave:x": { "file": "/samples/wood/rumba-clave.wav" },
+  "palitos:x": { "file": "/samples/wood/palitos.wav" },
+  "palitos2:x": { "file": "/samples/wood/palitos.wav" },
   "quinto:T": { "file": "/samples/quinto/quinto-tone.wav" },
   "quinto:s": { "file": "/samples/quinto/quinto-slap.wav" },
   "conga:T": { "file": "/samples/conga/conga-tone.wav" },
