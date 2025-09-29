@@ -4,9 +4,18 @@
   "pulses_per_measure": 8,
   "parts": {
     "cowbell open": "|..xx..xx|..xx..xx|",
-    "quinto": "|ssttsstt|ssttsstt|",
-    "conga": "|B...T.BB|.TTT..Bt|",
-    "tumba": "|s.B.TtTB|s..BTtTB|"
+    "quinto": {
+      "left": "|.s.t.s.t|.s.t.s.t|",
+      "right": "|s.t.s.t.|s.t.s.t.|"
+    },
+    "conga": {
+      "left": "|.......B|.T.T...t|",
+      "right": "|B...T.B.|..T...B.|"
+    },
+    "tumba": {
+      "left": "|..B..t.B|...B.t.B|",
+      "right": "|s...T.T.|s...T.T.|"
+    }
   },
   "initial_state": {
     "tempo": 120,

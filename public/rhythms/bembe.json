@@ -13,8 +13,17 @@
   },
   "parts": {
     "bell": "|x.x.xx|.x.x.x|",
-    "quinto": "|ts.tTT|ts.tTT|",
-    "conga": "|ptT.s.|ptT.s.|",
-    "tumba": "|T.BBtt|T.BBtt|"
+    "quinto": {
+      "left": "|B..B..|B..B..|",
+      "right": "|.s..TT|.s..TT|"
+    },
+    "conga": {
+      "left": "|B..B..|B..B..|",
+      "right": "|..T.s.|..T.s.|"
+    },
+    "tumba": {
+      "left": "|...B..|B..B..|",
+      "right": "|T.B.B.|..B.B.|"
+    }
   }
 }

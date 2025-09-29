@@ -14,7 +14,7 @@ export function toBaseName(name: string): string {
 
 // Initial state utilities
 
-export type SourceMode = 'auto' | 'sample' | 'synth'
+export type SourceMode = 'sample' | 'synth'
 export type InstrumentSetting = {vol: number; mute: boolean; source?: SourceMode}
 export type InstrumentSettingInput = {vol?: number; mute?: boolean; source?: SourceMode}
 
@@ -26,20 +26,19 @@ export function deriveInitialState(json: RhythmJSON): {
   // Start with defaults for all instruments present in the parts
   const mixer: Record<string, InstrumentSetting> = {}
   for (const inst of Object.keys(json.parts ?? {})) {
-    mixer[inst] = {vol: 1.0, mute: false, source: 'auto'}
+    mixer[inst] = {vol: 1.0, mute: false, source: 'sample'}
   }
   // Overlay any user-provided mixer entries from initial_state
   const mixerInput = json.initial_state?.mixer ?? {}
   for (const [inst, rawVal] of Object.entries(mixerInput as Record<string, unknown>)) {
     let vol = 1.0
     let mute = false
-    let source: SourceMode | undefined = 'auto'
+    let source: SourceMode | undefined = 'sample'
     if (rawVal && typeof rawVal === 'object') {
       const obj = rawVal as InstrumentSettingInput
       if (typeof obj.vol === 'number') vol = obj.vol
       if (typeof obj.mute === 'boolean') mute = obj.mute
-      if (obj.source === 'auto' || obj.source === 'sample' || obj.source === 'synth')
-        source = obj.source
+      if (obj.source === 'sample' || obj.source === 'synth') source = obj.source
     }
     mixer[inst] = {vol, mute, source}
   }

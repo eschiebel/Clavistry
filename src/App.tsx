@@ -1,8 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
-import WebRenderer from '@elemaudio/web-renderer'
 import type {ParsedRhythm, RhythmJSON} from './rhythm/types'
 import {parseRhythm} from './rhythm/parser'
-import {buildPulseMatrix} from './rhythm/sequence'
+import {buildPulseMatrix, buildDisplayMatrix, buildPlaybackMatrix} from './rhythm/sequence'
 import {triggerVoice, type StrokeSymbol} from './audio/voices'
 import {toBaseName, loadRhythm, getMeterInfo, type SourceMode} from './utils'
 import {tryPlaySample} from './audio/samples'
@@ -10,7 +9,7 @@ import {Mixer} from './components/Mixer'
 import {RhythmView} from './components/RhythmView'
 
 export default function App() {
-  const rendererRef = useRef<WebRenderer | null>(null)
+  // Elementary removed; use plain Web Audio throughout
   const audioCtxRef = useRef<AudioContext | null>(null)
   const masterGainRef = useRef<GainNode | null>(null)
   const compressorRef = useRef<DynamicsCompressorNode | null>(null)
@@ -21,7 +20,6 @@ export default function App() {
     Record<string, {vol: number; mute: boolean; source?: SourceMode}>
   >({})
   const mixerNodesRef = useRef<Map<string, GainNode>>(new Map())
-  const [rendererReady, setRendererReady] = useState<'idle' | 'ok' | 'failed'>('idle')
   const [started, setStarted] = useState(false)
   const [paused, setPaused] = useState(false)
   const [bpm, setBpm] = useState(120)
@@ -71,6 +69,8 @@ export default function App() {
     return 'bembe.json'
   })
   const matrix = useMemo(() => (rhythm ? buildPulseMatrix(rhythm) : null), [rhythm])
+  const displayMatrix = useMemo(() => (rhythm ? buildDisplayMatrix(rhythm) : null), [rhythm])
+  const playbackMatrix = useMemo(() => (rhythm ? buildPlaybackMatrix(rhythm) : null), [rhythm])
 
   const pulseIds = useMemo(() => {
     const count = matrix?.totalPulses ?? 0
@@ -101,7 +101,7 @@ export default function App() {
       const next = {...prev}
       for (const row of matrix.rows) {
         if (!next[row.instrument]) {
-          next[row.instrument] = {vol: 1.0, mute: false, source: 'auto'}
+          next[row.instrument] = {vol: 1.0, mute: false, source: 'sample'}
         }
       }
       // Optionally prune removed instruments
@@ -169,54 +169,11 @@ export default function App() {
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
-      rendererRef.current?.context?.close()
-      rendererRef.current = null
+      // Nothing to do for Elementary; ensure Web Audio is closed elsewhere if needed
     }
   }, [])
 
-  async function ensureRenderer() {
-    // Always ensure we have an AudioContext for synthesized voices
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new window.AudioContext()
-    }
-    if (audioCtxRef.current.state !== 'running') {
-      await audioCtxRef.current.resume().catch(() => {})
-    }
-
-    if (rendererRef.current || rendererReady === 'failed') return rendererRef.current ?? null
-
-    // Try to initialize Elementary renderer in the background with a timeout so Start doesn't hang
-    try {
-      const tryInit = async () => {
-        const renderer = new WebRenderer()
-        // Use the same context for simplicity
-        const ctx = audioCtxRef.current as AudioContext
-        await renderer.initialize(ctx, {
-          numberOfInputs: 0,
-          numberOfOutputs: 1,
-          outputChannelCount: [2],
-        })
-        rendererRef.current = renderer
-        setRendererReady('ok')
-        return renderer
-      }
-      const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 1500))
-      const result = await Promise.race([tryInit(), timeout])
-      if (result === null) {
-        console.warn('[Elementary] initialize timed out; continuing without renderer')
-        setRendererReady('failed')
-        return null
-      }
-      return result as WebRenderer
-    } catch (e) {
-      console.error('[Elementary] initialize failed:', e)
-      setRendererReady('failed')
-      return null
-    }
-  }
-
   async function start() {
-    await ensureRenderer()
     // Make sure our synth context is ready
     if (!audioCtxRef.current) {
       audioCtxRef.current = new window.AudioContext()
@@ -269,7 +226,7 @@ export default function App() {
             const setting = instrumentSettings[row.instrument] ?? {
               vol: 1.0,
               mute: false,
-              source: 'auto',
+              source: 'sample',
             }
             g.gain.value = setting.mute ? 0 : setting.vol
             g.connect(masterGainRef.current)
@@ -284,7 +241,7 @@ export default function App() {
             const setting = instrumentSettings[row.instrument] ?? {
               vol: 1.0,
               mute: false,
-              source: 'auto',
+              source: 'sample',
             }
             g.gain.value = setting.mute ? 0 : setting.vol
           }
@@ -296,11 +253,6 @@ export default function App() {
   }
 
   async function stop() {
-    const renderer = rendererRef.current
-    if (renderer) {
-      await renderer.context?.close().catch(() => {})
-      rendererRef.current = null
-    }
     if (audioCtxRef.current) {
       await audioCtxRef.current.close().catch(() => {})
       audioCtxRef.current = null
@@ -345,12 +297,12 @@ export default function App() {
 
   // Lookahead scheduler: schedule audio using AudioContext time with short lookahead
   useEffect(() => {
-    if (!rhythm || !matrix) return
-    const ctx = audioCtxRef.current ?? rendererRef.current?.context ?? null
+    if (!rhythm || !playbackMatrix) return
+    const ctx = audioCtxRef.current
     if (!ctx) return
 
     // Derive pulses per beat from meter (supports compound meters like 6/8)
-    const {pulsesPerBeat} = getMeterInfo(rhythm.timeSignature, matrix.pulsesPerMeasure)
+    const {pulsesPerBeat} = getMeterInfo(rhythm.timeSignature, playbackMatrix.pulsesPerMeasure)
     const pulsesPerSecond = (bpm / 60) * pulsesPerBeat
     const secondsPerPulse = 1 / pulsesPerSecond
     const LOOKAHEAD_SEC = 0.1 // schedule 100ms ahead
@@ -359,7 +311,7 @@ export default function App() {
     let nextIndex = pulseRef.current
 
     const tick = async () => {
-      const modulo = matrix.totalPulses
+      const modulo = playbackMatrix.totalPulses
       if (ctx.state !== 'running') {
         try {
           await ctx.resume()
@@ -386,18 +338,20 @@ export default function App() {
 
         const destDefault = masterGainRef.current ?? ctx.destination
         const when = nextNoteTime
-        for (const row of matrix.rows) {
+        for (const row of playbackMatrix.rows) {
           const sym = row.symbols[nextIndex]
           if (sym && sym !== '|' && sym !== '.') {
             const node = mixerNodesRef.current.get(row.instrument)
             const dest = node ?? destDefault
             const s = instrumentSettings[row.instrument]
-            const mode: SourceMode = s?.source ?? 'auto'
+            const mode: SourceMode = s?.source ?? 'sample'
             const stroke = sym as StrokeSymbol
             let usedSample = false
-            if (mode === 'sample' || mode === 'auto') {
+            if (mode === 'sample') {
               // Attempt to play sample; tryPlaySample returns true if it will play
-              usedSample = tryPlaySample(ctx, dest, row.instrument, stroke, when)
+              const sampleInst =
+                (row as {sampleInstrument?: string}).sampleInstrument ?? row.instrument
+              usedSample = tryPlaySample(ctx, dest, sampleInst, stroke, when)
             }
             if (!usedSample || mode === 'synth') {
               triggerVoice(ctx, dest, row.instrument, stroke, when)
@@ -410,7 +364,7 @@ export default function App() {
 
     const id = setInterval(tick, TICK_MS)
     return () => clearInterval(id)
-  }, [bpm, rhythm, matrix, started, paused, instrumentSettings])
+  }, [bpm, rhythm, playbackMatrix, started, paused, instrumentSettings])
 
   // Apply master volume changes dynamically (post-compressor output gain)
   useEffect(() => {
@@ -429,6 +383,14 @@ export default function App() {
       node.gain.value = s.mute ? 0 : s.vol
     }
   }, [instrumentSettings])
+
+  // Log transport state changes
+  useEffect(() => {
+    const transport = started ? 'started' : paused ? 'paused' : 'stopped'
+    const audioState = audioCtxRef.current?.state ?? 'uninitialized'
+    // eslint-disable-next-line no-console
+    console.log(`Transport: ${transport} · Audio: ${audioState}`)
+  }, [started, paused])
 
   // Ensure mixer nodes exist and are wired for the current matrix even when switching rhythms mid-play
   useEffect(() => {
@@ -501,7 +463,7 @@ export default function App() {
             fill="#3e2f1c"
           />
         </svg>
-        <h1 style={{marginBottom: '0'}}>Clavistry</h1>
+        <h1 style={{margin: '0'}}>Clavistry</h1>
       </div>
       <div style={{margin: '.5rem 0 1rem'}}>A drum machine for Afro-Caribbean drum ensembles.</div>
       <hr style={{border: 0, borderBottom: '1px solid #2b355f', marginBottom: '1rem'}} />
@@ -555,11 +517,6 @@ export default function App() {
           />
           <span style={{width: 48, textAlign: 'right'}}>{(masterVol * 100).toFixed(0)}%</span>
         </label>
-      </div>
-      <div style={{fontSize: 12, opacity: 0.7, marginBottom: 8}}>
-        Transport: {started ? 'started' : paused ? 'paused' : 'stopped'} · Audio:{' '}
-        {audioCtxRef.current?.state ?? 'uninitialized'} · Elementary:{' '}
-        {rendererRef.current ? 'ready' : rendererReady}
       </div>
 
       {renderRhythmView()}

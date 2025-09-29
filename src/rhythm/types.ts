@@ -14,10 +14,12 @@ type MixerInstrumentState = {
   mute?: boolean
 }
 
+export type PartValue = string | Record<string, string>
+
 export interface RhythmJSON {
   name: string
   time_signature: string // e.g. "6/8"
-  parts: Record<string, string> // instrument -> tablature line
+  parts: Record<string, PartValue> // instrument -> tablature line(s)
   pulses_per_measure?: number // optional explicit grid resolution per measure
   initial_state?: {
     mixer?: Record<string, MixerInstrumentState>
@@ -27,8 +29,9 @@ export interface RhythmJSON {
 
 export interface ParsedPart {
   instrument: string
-  raw: string // original tablature string
-  tokens: StrokeSymbol[] // includes only strokes and rests (no '|')
+  raw: string // original tablature (single line or merged for L/R)
+  tokens: StrokeSymbol[] // merged playable line (no '|')
+  displaySubparts?: {label: string; tokens: StrokeSymbol[]}[] // optional UI-only split lines
 }
 
 export interface ParsedRhythm {

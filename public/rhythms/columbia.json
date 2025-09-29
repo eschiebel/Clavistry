@@ -4,8 +4,14 @@
   "pulses_per_measure": 6,
   "parts": {
     "cowbell open": "|x.x.xx|.x.x.x|",
-    "conga": "|ptTT.s|ptTT.s|",
-    "tumba": "|ptstTT|ptstTt|"
+    "conga": {
+      "left": "|pt.T..|pt.T..|",
+      "right": "|..T..s|..T..s|"
+    },
+    "tumba": {
+      "left": "|pt.t..|pt.t..|",
+      "right": "|..s.TT|..s.TT|"
+    }
   },
   "initial_state": {
     "tempo": 144,

@@ -1,7 +1,8 @@
 import {Fragment} from 'react'
+import {Toggle} from './Toggle'
 import type {PulseMatrix} from '../rhythm/sequence'
+import type {SourceMode} from '../utils'
 
-type SourceMode = 'auto' | 'sample' | 'synth'
 type InstrumentSettings = Record<string, {vol: number; mute: boolean; source?: SourceMode}>
 
 interface MixerProps {
@@ -57,28 +58,28 @@ export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: Mixer
                 <span className="vol-value">{Math.round(s.vol * 100)}%</span>
               </div>
               <div>
-                <label
+                <div
                   className="source-label"
                   style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}
                 >
-                  <span>Voice</span>
-                  <select
-                    value={s.source ?? 'auto'}
-                    onChange={e =>
+                  <span className="screenreader-only">Voice</span>
+                  <Toggle
+                    value={(s.source ?? 'sample') as SourceMode}
+                    onValue={'sample' as SourceMode}
+                    offValue={'synth' as SourceMode}
+                    onLabel="Sample"
+                    offLabel="Synth"
+                    onChange={val =>
                       setInstrumentSettings(prev => ({
                         ...prev,
                         [row.instrument]: {
                           ...s,
-                          source: (e.target.value as SourceMode) ?? 'auto',
+                          source: val as SourceMode,
                         },
                       }))
                     }
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="sample">Sample</option>
-                    <option value="synth">Synth</option>
-                  </select>
-                </label>
+                  />
+                </div>
               </div>
             </Fragment>
           )

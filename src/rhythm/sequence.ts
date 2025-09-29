@@ -3,6 +3,40 @@ import type {ParsedRhythm, StrokeSymbol} from './types'
 export interface PulseRow {
   instrument: string
   symbols: StrokeSymbol[] // length = totalPulses
+  // For sample selection only: when a part has labeled subparts, this carries
+  // the instrument name augmented with the sub-label (e.g., "cowbell open").
+  // Mixer routing should continue to use `instrument`.
+  sampleInstrument?: string
+}
+
+// Build a matrix for PLAYBACK, expanding any left/right subparts into distinct rows
+// so simultaneous strikes are preserved. Both rows keep the same instrument name
+// so they route through the same mixer channel.
+export function buildPlaybackMatrix(r: ParsedRhythm): PulseMatrix {
+  const N = r.pulsesPerMeasure
+  const maxLen = r.parts.reduce((m, p) => Math.max(m, p.tokens.length), 0)
+
+  const padTo = (arr: StrokeSymbol[], len: number): StrokeSymbol[] => {
+    if (arr.length >= len) return arr.slice(0, len)
+    return arr.concat(Array.from({length: len - arr.length}, () => '.') as StrokeSymbol[])
+  }
+
+  const rows: PulseRow[] = []
+  for (const p of r.parts) {
+    if (p.displaySubparts && p.displaySubparts.length > 0) {
+      for (const sp of p.displaySubparts) {
+        rows.push({
+          instrument: p.instrument,
+          sampleInstrument: `${p.instrument} ${sp.label}`,
+          symbols: padTo(sp.tokens as StrokeSymbol[], maxLen),
+        })
+      }
+    } else {
+      rows.push({instrument: p.instrument, sampleInstrument: p.instrument, symbols: padTo(p.tokens as StrokeSymbol[], maxLen)})
+    }
+  }
+
+  return {pulsesPerMeasure: N, totalPulses: maxLen, rows}
 }
 
 export interface PulseMatrix {
@@ -26,6 +60,34 @@ export function buildPulseMatrix(r: ParsedRhythm): PulseMatrix {
     }
     return {instrument: p.instrument, symbols: line}
   })
+
+  return {pulsesPerMeasure: N, totalPulses: maxLen, rows}
+}
+
+// Build a matrix for DISPLAY only, expanding any left/right subparts into distinct rows.
+export function buildDisplayMatrix(r: ParsedRhythm): PulseMatrix {
+  const N = r.pulsesPerMeasure
+  // Determine total length across all merged tokens (same as playback)
+  const maxLen = r.parts.reduce((m, p) => Math.max(m, p.tokens.length), 0)
+
+  const padTo = (arr: StrokeSymbol[], len: number): StrokeSymbol[] => {
+    if (arr.length >= len) return arr.slice(0, len)
+    return arr.concat(Array.from({length: len - arr.length}, () => '.') as StrokeSymbol[])
+  }
+
+  const rows: PulseRow[] = []
+  for (const p of r.parts) {
+    if (p.displaySubparts && p.displaySubparts.length > 0) {
+      for (const sp of p.displaySubparts) {
+        rows.push({
+          instrument: `${p.instrument}: ${sp.label}`,
+          symbols: padTo(sp.tokens as StrokeSymbol[], maxLen),
+        })
+      }
+    } else {
+      rows.push({instrument: p.instrument, symbols: padTo(p.tokens as StrokeSymbol[], maxLen)})
+    }
+  }
 
   return {pulsesPerMeasure: N, totalPulses: maxLen, rows}
 }
