@@ -3,13 +3,26 @@
   "time_signature": "4/4",
   "pulses_per_measure": 8,
   "parts": {
-    "agogo bell1 high": "|....x...|....x.x.|",
-    "agogo bell1 low": "|x.x....x|.x......|",
-    "agogo bell2 high": "|x.....x.|...x....|",
-    "agogo bell2 low": "|...x....|x.....x.|",
-    "quinto": "|T..ps..t|s..BT.T.|",
-    "conga": "|ttssttTT|ttssttTT|",
-    "tumba": "|B.B.B.B.|B.BT..B."
+    "agogo bell": {
+      "high": "|....xx..|....x.x.|",
+      "low": "|x.x....x|.xx.....|"
+    },
+    "cowbell": {
+      "closed": "|x.....x.|...x....|",
+      "open": "|...x....|x.....x.|"
+    },
+    "quinto": {
+      "left": "|...p...t|...B..T.|",
+      "right": "|T...s...|s...T...|"
+    },
+    "conga": {
+      "left": "|.t.s.t.T|.t.s.t.T|",
+      "right": "|t.s.t.T.|t.s.t.T.|"
+    },
+    "tumba": {
+      "left": "|..B...B.|..B...B.|",
+      "right": "|B...B...|B..T....|"
+    }
   },
   "initial_state": {
     "tempo": 144,

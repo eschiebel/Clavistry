@@ -1,4 +1,4 @@
-import type {ParsedPart, ParsedRhythm, RhythmJSON, StrokeSymbol} from './types'
+import type {ParsedPart, ParsedRhythm, PartValue, RhythmJSON, StrokeSymbol} from './types'
 
 const VALID_STROKES = new Set<StrokeSymbol>(['T', 's', 'M', 'B', 'p', 't', 'x', '.', '|'])
 
@@ -32,22 +32,61 @@ export function stripBars(tokens: StrokeSymbol[]): StrokeSymbol[] {
   return tokens.filter(t => t !== '|')
 }
 
-export function parseRhythm(json: RhythmJSON): ParsedRhythm {
-  const {numerator, denominator} = parseTimeSignature(json.time_signature)
-  const parts: ParsedPart[] = Object.entries(json.parts).map(([instrument, raw]) => {
-    // Strict validation: throw if any unrecognized character is present
-    for (let i = 0; i < raw.length; i++) {
-      const ch = raw[i] as StrokeSymbol
-      if (!VALID_STROKES.has(ch)) {
-        const allowed = Array.from(VALID_STROKES).join(', ')
-        throw new Error(
-          `Invalid stroke character '${raw[i]}' in instrument '${instrument}' at position ${i + 1}. Allowed: ${allowed}`,
-        )
+function validateLine(raw: string, instrument: string) {
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i] as StrokeSymbol
+    if (!VALID_STROKES.has(ch)) {
+      const allowed = Array.from(VALID_STROKES).join(', ')
+      throw new Error(
+        `Invalid stroke character '${raw[i]}' in instrument '${instrument}' at position ${i + 1}. Allowed: ${allowed}`,
+      )
+    }
+  }
+}
+
+function parsePart(instrument: string, value: PartValue): ParsedPart {
+  if (typeof value === 'string') {
+    validateLine(value, instrument)
+    const tokens = stripBars(tokenizeLine(value)) as StrokeSymbol[]
+    return {instrument, raw: value, tokens}
+  }
+  // Object with arbitrary labeled subparts
+  const labels = Object.keys(value)
+  const subparts: {label: string; tokens: StrokeSymbol[]}[] = []
+  for (const label of labels) {
+    const raw = value[label] as string
+    validateLine(raw, `${instrument}:${label}`)
+    const tokens = stripBars(tokenizeLine(raw)) as StrokeSymbol[]
+    subparts.push({label, tokens})
+  }
+  const maxLen = subparts.reduce((m, sp) => Math.max(m, sp.tokens.length), 0)
+  // Merge for top-level tokens (used by non-playback contexts): pick first non-rest by subpart order
+  const merged: StrokeSymbol[] = []
+  for (let i = 0; i < maxLen; i++) {
+    let tok: StrokeSymbol = '.'
+    for (const sp of subparts) {
+      const t = (sp.tokens[i] ?? '.') as StrokeSymbol
+      if (t !== '.') {
+        tok = t
+        break
       }
     }
-    const tokens = tokenizeLine(raw)
-    return {instrument, raw, tokens: stripBars(tokens) as StrokeSymbol[]}
-  })
+    merged.push(tok)
+  }
+  const rawJoined = labels.map(l => value[l]).join('\n')
+  return {
+    instrument,
+    raw: rawJoined,
+    tokens: merged,
+    displaySubparts: subparts,
+  }
+}
+
+export function parseRhythm(json: RhythmJSON): ParsedRhythm {
+  const {numerator, denominator} = parseTimeSignature(json.time_signature)
+  const parts: ParsedPart[] = Object.entries(json.parts).map(([instrument, value]) =>
+    parsePart(instrument, value),
+  )
 
   return {
     name: json.name,

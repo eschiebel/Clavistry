@@ -17,14 +17,41 @@ function dbToLinear(db: number): number {
   return 10 ** (db / 20)
 }
 
+function getBaseUrl(): string {
+  // @ts-expect-error Vite exposes BASE_URL at build time
+  const b = import.meta.env.BASE_URL ?? '/'
+  return b.endsWith('/') ? b : `${b}/`
+}
+
+function withBase(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  const base = getBaseUrl()
+  const p = path.startsWith('/') ? path.slice(1) : path
+  return `${base}${p}`
+}
+
 async function loadMap(): Promise<void> {
   if (mapLoaded || mapLoadStarted) return
   mapLoadStarted = true
   try {
-    const res = await fetch('/samples/map.json')
+    const res = await fetch(withBase('samples/map.json'))
     if (!res.ok) throw new Error(`Failed to load samples map: ${res.status}`)
-    const json = (await res.json()) as Record<string, {file: string; gain?: number}>
-    sampleMap = json || {}
+    const raw = (await res.json()) as Record<string, unknown>
+    const flat: Record<string, SampleMapEntry> = {}
+    for (const [k, v] of Object.entries(raw)) {
+      if (v && typeof v === 'object' && 'file' in (v as any)) {
+        flat[k] = v as SampleMapEntry
+      } else if (v && typeof v === 'object') {
+        // Nested instrument object: keys like "open:x" or "left:T"
+        for (const [sk, sv] of Object.entries(v as Record<string, unknown>)) {
+          if (sv && typeof sv === 'object' && 'file' in (sv as any)) {
+            const combined = `${k} ${sk}`
+            flat[combined] = sv as SampleMapEntry
+          }
+        }
+      }
+    }
+    sampleMap = flat
     mapLoaded = true
   } catch (e) {
     console.warn('[samples] map.json load failed:', e)
@@ -43,7 +70,7 @@ async function loadBuffer(ctx: AudioContext, path: string): Promise<AudioBuffer>
   const pending = bufferPromises.get(path)
   if (pending) return pending
   const p = (async () => {
-    const res = await fetch(path)
+    const res = await fetch(withBase(path))
     if (!res.ok) throw new Error(`Failed to fetch sample ${path}: ${res.status}`)
     const arr = await res.arrayBuffer()
     const buf = await ctx.decodeAudioData(arr)
@@ -79,7 +106,16 @@ export function tryPlaySample(
     void loadMap()
     return false
   }
-  const entry = getEntry(key)
+  // Use exact, case-sensitive key matching; if missing and instrument contains a
+  // subpart suffix (e.g., "conga left"), fall back to the base instrument ("conga").
+  let entry = getEntry(key)
+  if (!entry) {
+    const idx = instrument.lastIndexOf(' ')
+    if (idx > 0) {
+      const base = instrument.slice(0, idx)
+      entry = getEntry(`${base}:${stroke}`)
+    }
+  }
   if (!entry) return false
   const startTime = when ?? ctx.currentTime
   // Kick off load; schedule when ready if still in future, else play immediately

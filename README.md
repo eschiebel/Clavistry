@@ -12,7 +12,6 @@
   ## TODO
   - needs tests
   - need a way to upload rhythm json
-  - I might want to use samples rather than synthesized voices
   - More stuff I haven't thought of yet
 
   ## Stack
@@ -20,7 +19,7 @@
   - TypeScript
   - React (Vite)
   - Biome (lint/format)
-  - Elementary Audio (`@elemaudio/core`, `@elemaudio/web-renderer`)
+  - Web Audio API
 
   ## Getting Started
  1. Install dependencies:
@@ -44,18 +43,18 @@
   ```
 
   ## Rhythm Format (tablature JSON)
-  See `public/rhythms/bembe.json` and the notes in `# DrumsElementary.md`.
+  See `public/rhythms/tumbao.json` and the notes in `# DrumsElementary.md`.
 
-  Example structure:
-  ```json
-  {
-    "name": "Bembe",
-    "time_signature": "6/8",
-    "parts": {
-      "bell": "|x.x.xx|.x.x.x|",
-      "quinto": "|ts.tTT|ts.tTT|",
-      "conga": "|ptT.s.|ptT.s.|",
-      "tumba": "|T.BBtt|T.BBtt|"
-    }
-  }
-  ```
+  The parts are defined as strings of characters that correspond to different drum hits.
+  The characters are:
+  - `.`: rest
+  - `x`: stroke (typically for bell/clave/ etc.)
+  - `P`: palm
+  - `t`: touch
+  - `T`: open tone
+  - `s`: slap
+  - `M`: muff
+  - `B`: bass
+
+  
+Rhythm parts are mapped to samples in `public/samples/map.json`.

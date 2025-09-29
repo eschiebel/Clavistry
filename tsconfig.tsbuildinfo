@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/utils.ts","./src/audio/samples.ts","./src/audio/voices.ts","./src/components/mixer.tsx","./src/components/rhythmview.tsx","./src/rhythm/parser.ts","./src/rhythm/sequence.ts","./src/rhythm/types.ts"],"version":"5.9.2"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/utils.ts","./src/audio/samples.ts","./src/audio/voices.ts","./src/components/mixer.tsx","./src/components/rhythmview.tsx","./src/components/toggle.tsx","./src/rhythm/parser.ts","./src/rhythm/sequence.ts","./src/rhythm/types.ts"],"version":"5.9.2"}
