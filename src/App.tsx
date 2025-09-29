@@ -10,6 +10,7 @@ import {triggerVoice, type StrokeSymbol} from './audio/voices'
 import {toBaseName, loadRhythm, getMeterInfo, type SourceMode} from './utils'
 import {tryPlaySample} from './audio/samples'
 import {Mixer} from './components/Mixer'
+import {AboutClavistry} from './components/AboutClavistry'
 import {RhythmView} from './components/RhythmView'
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
   const [selectedVariants, setSelectedVariants] = useState<Record<string, number>>({})
   const [holdUntil, setHoldUntil] = useState<number | null>(null)
   const transportStartRef = useRef<number | null>(null)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const pulseRef = useRef(0)
   useEffect(() => {
     pulseRef.current = pulse
@@ -505,7 +507,7 @@ export default function App() {
   }
 
   return (
-    <div style={{fontFamily: 'system-ui, sans-serif', padding: 24}}>
+    <div style={{padding: 24}}>
       <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
         <svg
           className="icon"
@@ -523,6 +525,23 @@ export default function App() {
           />
         </svg>
         <h1 style={{margin: '0'}}>Clavistry</h1>
+        <button
+          type="button"
+          aria-label="About Clavistry"
+          title="About"
+          onClick={() => setAboutOpen(true)}
+          style={{
+            width: 28,
+            height: 28,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            borderRadius: '50%',
+          }}
+        >
+          ?
+        </button>
       </div>
       <div style={{margin: '.5rem 0 1rem'}}>A drum machine for Afro-Caribbean drum ensembles.</div>
       <hr style={{border: 0, borderBottom: '1px solid #2b355f', marginBottom: '1rem'}} />
@@ -588,6 +607,8 @@ export default function App() {
           }
         />
       )}
+
+      <AboutClavistry open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </div>
   )
 }

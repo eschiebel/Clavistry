@@ -7,6 +7,7 @@ body {
   margin: 0;
   background: #0b1020;
   color: #e9eef5;
+  font-family: system-ui, sans-serif;
 }
 button {
   cursor: pointer;
@@ -241,5 +242,62 @@ button:disabled {
   .vol-value {
     width: 40px;
     text-align: right;
+  }
+}
+
+.clavistry-dialog {
+  background: #0f1430;
+  border: 1px solid #2b355f;
+  border-radius: 8px;
+  max-width: 640px;
+  width: min(90vw, 640px);
+  max-height: 90vh;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color: #e9eef5;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+
+  h2.title {
+    display: inline-block;
+    margin: 0;
+  }
+
+  .sub-title {
+    font-size: 1rem;
+    font-style: italic;
+    margin-inline-start: 1rem;
+  }
+
+  .dialog-body {
+    overflow: auto;
+    min-height: 0;
+    overscroll-behavior: contain;
+  }
+}
+
+/* About dialog */
+.about-table {
+  border-collapse: collapse;
+
+  caption {
+    caption-side: top; /* or bottom */
+    text-align: left;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  th {
+    text-align: left;
+    padding-right: 12px;
+    font-weight: 600;
+  }
+  td {
+    padding-right: 12px;
+  }
+
+  td:first-child {
+    text-align: center;
   }
 }
