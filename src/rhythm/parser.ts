@@ -44,47 +44,69 @@ function validateLine(raw: string, instrument: string) {
   }
 }
 
-function parsePart(instrument: string, value: PartValue): ParsedPart {
-  if (typeof value === 'string') {
-    validateLine(value, instrument)
-    const tokens = stripBars(tokenizeLine(value)) as StrokeSymbol[]
-    return {instrument, raw: value, tokens}
-  }
-  // Object with arbitrary labeled subparts
-  const labels = Object.keys(value)
-  const subparts: {label: string; tokens: StrokeSymbol[]}[] = []
-  for (const label of labels) {
-    const raw = value[label] as string
-    validateLine(raw, `${instrument}:${label}`)
-    const tokens = stripBars(tokenizeLine(raw)) as StrokeSymbol[]
-    subparts.push({label, tokens})
-  }
-  const maxLen = subparts.reduce((m, sp) => Math.max(m, sp.tokens.length), 0)
-  // Merge for top-level tokens (used by non-playback contexts): pick first non-rest by subpart order
-  const merged: StrokeSymbol[] = []
-  for (let i = 0; i < maxLen; i++) {
-    let tok: StrokeSymbol = '.'
-    for (const sp of subparts) {
-      const t = (sp.tokens[i] ?? '.') as StrokeSymbol
-      if (t !== '.') {
-        tok = t
-        break
+function isRecord(v: unknown): v is Record<string, string> {
+  return !!v && !Array.isArray(v) && typeof v === 'object'
+}
+
+function parsePart(instrument: string, value: PartValue): ParsedPart[] {
+  const processOne = (idx: number, v: string | Record<string, string>): ParsedPart => {
+    if (typeof v === 'string') {
+      validateLine(v, instrument)
+      const tokens = stripBars(tokenizeLine(v)) as StrokeSymbol[]
+      return {
+        instrument: idx === 0 ? instrument : `${instrument} alt[${idx}]`,
+        baseInstrument: instrument,
+        variantIndex: idx,
+        raw: v,
+        tokens,
       }
     }
-    merged.push(tok)
+    const labels = Object.keys(v)
+    const subparts: {label: string; tokens: StrokeSymbol[]}[] = []
+    for (const label of labels) {
+      const raw = v[label] as string
+      validateLine(raw, `${instrument}:${label}`)
+      const tokens = stripBars(tokenizeLine(raw)) as StrokeSymbol[]
+      subparts.push({label, tokens})
+    }
+    const maxLen = subparts.reduce((m, sp) => Math.max(m, sp.tokens.length), 0)
+    const merged: StrokeSymbol[] = []
+    for (let i = 0; i < maxLen; i++) {
+      let tok: StrokeSymbol = '.'
+      for (const sp of subparts) {
+        const t = (sp.tokens[i] ?? '.') as StrokeSymbol
+        if (t !== '.') {
+          tok = t
+          break
+        }
+      }
+      merged.push(tok)
+    }
+    const rawJoined = labels.map(l => v[l]).join('\n')
+    return {
+      instrument: idx === 0 ? instrument : `${instrument} alt[${idx}]`,
+      baseInstrument: instrument,
+      variantIndex: idx,
+      raw: rawJoined,
+      tokens: merged,
+      displaySubparts: subparts,
+    }
   }
-  const rawJoined = labels.map(l => value[l]).join('\n')
-  return {
-    instrument,
-    raw: rawJoined,
-    tokens: merged,
-    displaySubparts: subparts,
+
+  if (typeof value === 'string' || isRecord(value)) {
+    // Single string or object of subparts
+    return [processOne(0, value as string | Record<string, string>)]
   }
+  // Array of alternates
+  const arr = value as Array<string | Record<string, string>>
+  const out: ParsedPart[] = []
+  arr.forEach((v, idx) => out.push(processOne(idx, v)))
+  return out
 }
 
 export function parseRhythm(json: RhythmJSON): ParsedRhythm {
   const {numerator, denominator} = parseTimeSignature(json.time_signature)
-  const parts: ParsedPart[] = Object.entries(json.parts).map(([instrument, value]) =>
+  const parts: ParsedPart[] = Object.entries(json.parts).flatMap(([instrument, value]) =>
     parsePart(instrument, value),
   )
 

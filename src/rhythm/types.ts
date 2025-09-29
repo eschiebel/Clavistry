@@ -14,7 +14,7 @@ type MixerInstrumentState = {
   mute?: boolean
 }
 
-export type PartValue = string | Record<string, string>
+export type PartValue = string | Record<string, string> | Array<string | Record<string, string>>
 
 export interface RhythmJSON {
   name: string
@@ -28,7 +28,9 @@ export interface RhythmJSON {
 }
 
 export interface ParsedPart {
-  instrument: string
+  instrument: string // display name; may include alt suffix in base name
+  baseInstrument: string // instrument key as in JSON parts
+  variantIndex: number // 0 for default, >0 for alternates
   raw: string // original tablature (single line or merged for L/R)
   tokens: StrokeSymbol[] // merged playable line (no '|')
   displaySubparts?: {label: string; tokens: StrokeSymbol[]}[] // optional UI-only split lines

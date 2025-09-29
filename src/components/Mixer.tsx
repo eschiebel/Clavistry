@@ -9,35 +9,67 @@ interface MixerProps {
   matrix: PulseMatrix
   instrumentSettings: InstrumentSettings
   setInstrumentSettings: React.Dispatch<React.SetStateAction<InstrumentSettings>>
+  selectedVariants: Record<string, number>
+  onChangeVariant: (base: string, idx: number) => void
 }
 
-export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: MixerProps) {
+export function Mixer({
+  matrix,
+  instrumentSettings,
+  setInstrumentSettings,
+  selectedVariants,
+  onChangeVariant,
+}: MixerProps) {
+  // Group rows by baseInstrument
+  const groups = new Map<string, typeof matrix.rows>()
+  const variantsByBase = new Map<string, number[]>()
+  for (const row of matrix.rows) {
+    const base = row.baseInstrument ?? row.instrument
+    const arr = groups.get(base) ?? []
+    arr.push(row)
+    groups.set(base, arr)
+    const vidx = row.variantIndex ?? 0
+    const vArr = variantsByBase.get(base) ?? []
+    if (!vArr.includes(vidx)) vArr.push(vidx)
+    variantsByBase.set(base, vArr)
+  }
+
   return (
     <div className="mixer-card">
       <h2>Mixer</h2>
       <div className="mixer-grid">
         <div className="mixer-header">Instrument</div>
-        <div className="mixer-header">Mute</div>
+        <div className="mixer-header mixer-center">Mute</div>
         <div className="mixer-header">Volume</div>
+        <div className="mixer-header">Variant</div>
         <div className="mixer-header">Voice</div>
-        {matrix.rows.map(row => {
-          const s = instrumentSettings[row.instrument] ?? {vol: 1.0, mute: false}
+        {[...groups.entries()].map(([base, rows]) => {
+          // Prefer the default variant row for display if present
+          const defaultRow = rows.find(r => (r.variantIndex ?? 0) === 0) ?? rows[0]
+          const label = defaultRow.instrument
+          const s = instrumentSettings[defaultRow.instrument] ?? {vol: 1.0, mute: false}
+          const groupVariants = (variantsByBase.get(base) ?? [0]).sort((a, b) => a - b)
+          const showVariant = groupVariants.length > 1
           return (
-            <Fragment key={row.instrument}>
-              <div className="instrument-name">{row.instrument}</div>
-              <div>
+            <Fragment key={base}>
+              <div className="instrument-name">{label}</div>
+              <div className="mixer-center">
                 <label className="mute-label">
                   <input
                     type="checkbox"
                     checked={!!s.mute}
                     onChange={e =>
-                      setInstrumentSettings(prev => ({
-                        ...prev,
-                        [row.instrument]: {...s, mute: e.target.checked},
-                      }))
+                      setInstrumentSettings(prev => {
+                        const next = {...prev}
+                        for (const r of rows) {
+                          const cur = next[r.instrument] ?? {vol: 1.0, mute: false}
+                          next[r.instrument] = {...cur, mute: e.target.checked}
+                        }
+                        return next
+                      })
                     }
                   />
-                  <span>Mute</span>
+                  <span className="screenreader-only">Mute</span>
                 </label>
               </div>
               <div className="vol-row">
@@ -48,14 +80,43 @@ export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: Mixer
                   step={0.05}
                   value={s.vol}
                   onChange={e =>
-                    setInstrumentSettings(prev => ({
-                      ...prev,
-                      [row.instrument]: {...s, vol: Number(e.target.value)},
-                    }))
+                    setInstrumentSettings(prev => {
+                      const next = {...prev}
+                      const vol = Number(e.target.value)
+                      for (const r of rows) {
+                        const cur = next[r.instrument] ?? {vol: 1.0, mute: false}
+                        next[r.instrument] = {...cur, vol}
+                      }
+                      return next
+                    })
                   }
                   className="vol-range"
                 />
                 <span className="vol-value">{Math.round(s.vol * 100)}%</span>
+              </div>
+              <div>
+                {showVariant ? (
+                  <fieldset className="variant-group">
+                    <legend className="screenreader-only">{`${base} variants`}</legend>
+                    {groupVariants.map(idx => (
+                      <label
+                        key={`${base}-v-${idx}`}
+                        style={{display: 'inline-flex', gap: 4, alignItems: 'center'}}
+                      >
+                        <input
+                          type="radio"
+                          name={`variant-${base}`}
+                          value={idx}
+                          checked={(selectedVariants[base] ?? 0) === idx}
+                          onChange={() => onChangeVariant(base, idx)}
+                        />
+                        <span>{idx === 0 ? 'default' : `alt(${idx})`}</span>
+                      </label>
+                    ))}
+                  </fieldset>
+                ) : (
+                  <span style={{opacity: 0.6}}>—</span>
+                )}
               </div>
               <div>
                 <div
@@ -70,13 +131,17 @@ export function Mixer({matrix, instrumentSettings, setInstrumentSettings}: Mixer
                     onLabel="Sample"
                     offLabel="Synth"
                     onChange={val =>
-                      setInstrumentSettings(prev => ({
-                        ...prev,
-                        [row.instrument]: {
-                          ...s,
-                          source: val as SourceMode,
-                        },
-                      }))
+                      setInstrumentSettings(prev => {
+                        const next = {...prev}
+                        for (const r of rows) {
+                          const cur = next[r.instrument] ?? {vol: 1.0, mute: false}
+                          next[r.instrument] = {
+                            ...cur,
+                            source: val as SourceMode,
+                          }
+                        }
+                        return next
+                      })
                     }
                   />
                 </div>

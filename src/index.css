@@ -141,14 +141,10 @@ button:disabled {
     justify-content: space-between;
     gap: 8px;
     margin-inline-end: .5rem;
-  }
-
-  .inst-left {
-    text-align: left;
+    width: 100%;
   }
 
   .inst-side {
-    text-align: right;
     opacity: 0.8;
     min-width: 1.25rem;
   }
@@ -191,18 +187,24 @@ button:disabled {
   margin: 12px 0;
 
   h2 {
-    margin-bottom: 6px;
+    margin-top: 0;
+    margin-bottom: 8px;
   }
 
   .mixer-grid {
     display: grid;
-    grid-template-columns: 160px 80px 260px 160px;
+    grid-template-columns: 160px 50px 260px 200px 160px;
     gap: 8px;
     align-items: center;
   }
 
   .mixer-header {
     opacity: 0.7;
+  }
+
+  .mixer-center {
+    display: flex;
+    justify-content: center;
   }
 
   .instrument-name {
@@ -219,6 +221,17 @@ button:disabled {
     display: inline-flex;
     gap: 8px;
     align-items: center;
+  }
+
+  .variant-group {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    border: none;
+    padding: 0;
+    margin: 0;
   }
 
   .vol-range {

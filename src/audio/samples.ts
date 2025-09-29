@@ -30,23 +30,37 @@ function withBase(path: string): string {
   return `${base}${p}`
 }
 
+function isObject(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object'
+}
+
+function isSampleEntry(v: unknown): v is SampleMapEntry {
+  return (
+    isObject(v) &&
+    typeof v.file === 'string' &&
+    (v.gain === undefined || typeof v.gain === 'number')
+  )
+}
+
 async function loadMap(): Promise<void> {
   if (mapLoaded || mapLoadStarted) return
   mapLoadStarted = true
   try {
     const res = await fetch(withBase('samples/map.json'))
     if (!res.ok) throw new Error(`Failed to load samples map: ${res.status}`)
-    const raw = (await res.json()) as Record<string, unknown>
+    const raw = (await res.json()) as unknown
     const flat: Record<string, SampleMapEntry> = {}
-    for (const [k, v] of Object.entries(raw)) {
-      if (v && typeof v === 'object' && 'file' in (v as any)) {
-        flat[k] = v as SampleMapEntry
-      } else if (v && typeof v === 'object') {
-        // Nested instrument object: keys like "open:x" or "left:T"
-        for (const [sk, sv] of Object.entries(v as Record<string, unknown>)) {
-          if (sv && typeof sv === 'object' && 'file' in (sv as any)) {
-            const combined = `${k} ${sk}`
-            flat[combined] = sv as SampleMapEntry
+    if (isObject(raw)) {
+      for (const [k, v] of Object.entries(raw)) {
+        if (isSampleEntry(v)) {
+          flat[k] = v
+        } else if (isObject(v)) {
+          // Nested instrument object: keys like "open:x" or "left:T"
+          for (const [sk, sv] of Object.entries(v)) {
+            if (isSampleEntry(sv)) {
+              const combined = `${k} ${sk}`
+              flat[combined] = sv
+            }
           }
         }
       }
