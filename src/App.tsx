@@ -19,7 +19,7 @@ export default function App() {
   const masterGainRef = useRef<GainNode | null>(null)
   const compressorRef = useRef<DynamicsCompressorNode | null>(null)
   const outputGainRef = useRef<GainNode | null>(null)
-  const [masterVol, setMasterVol] = useState(1.6) // linear gain
+  const [masterVol, setMasterVol] = useState(1.0) // linear gain
   // Mixer: per-instrument settings and nodes
   const [instrumentSettings, setInstrumentSettings] = useState<
     Record<string, {vol: number; mute: boolean; source?: SourceMode}>
@@ -204,17 +204,17 @@ export default function App() {
     if (ctx) {
       if (!masterGainRef.current) {
         const g = ctx.createGain()
-        g.gain.value = 1.2 // fixed pre-boost before compression
+        g.gain.value = 1.0 // unity pre level before compression
         masterGainRef.current = g
       }
       if (!compressorRef.current) {
         const comp = ctx.createDynamicsCompressor()
-        // Gentle bus compression
-        comp.threshold.value = -24
-        comp.knee.value = 30
-        comp.ratio.value = 6
-        comp.attack.value = 0.003
-        comp.release.value = 0.125
+        // Gentler bus compression to avoid pumping/distortion
+        comp.threshold.value = -18
+        comp.knee.value = 24
+        comp.ratio.value = 4
+        comp.attack.value = 0.01
+        comp.release.value = 0.2
         compressorRef.current = comp
       }
       if (!outputGainRef.current) {
@@ -280,11 +280,11 @@ export default function App() {
         osc.type = 'square'
         osc.frequency.value = accent ? 2200 : 1500
         g.gain.setValueAtTime(0.0001, when)
-        g.gain.linearRampToValueAtTime(accent ? 1.0 : 0.7, when + 0.001)
+        g.gain.linearRampToValueAtTime(accent ? 0.7 : 0.4, when + 0.001)
         g.gain.exponentialRampToValueAtTime(0.0001, when + 0.07)
         osc.connect(g)
-        ;(outputGainRef.current ?? ctx.destination) &&
-          g.connect(outputGainRef.current ?? ctx.destination)
+        // Route click through master chain so compression/volume apply
+        g.connect(masterGainRef.current ?? ctx.destination)
         osc.start(when)
         osc.stop(when + 0.09)
       }

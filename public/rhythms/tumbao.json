@@ -22,10 +22,7 @@
       "clave": { "vol": 1.0, "mute": false },
       "quinto": { "vol": 1.0, "mute": false },
       "conga": { "vol": 1.0, "mute": false },
-      "cowbell": {
-        "open": { "vol": 0.25, "mute": false },
-        "closed": { "vol": 0.25, "mute": false }
-      }
+      "cowbell": { "vol": 0.5, "mute": false }
     }
   }
 }
