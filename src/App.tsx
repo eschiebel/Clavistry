@@ -508,11 +508,11 @@ export default function App() {
 
   return (
     <div style={{padding: 24}}>
-      <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
         <svg
           className="icon"
-          width="28"
-          height="28"
+          width="28px"
+          height="28px"
           viewBox="0 0 64 64"
           xmlns="http://www.w3.org/2000/svg"
           fill="currentColor"
@@ -531,11 +531,8 @@ export default function App() {
           title="About"
           onClick={() => setAboutOpen(true)}
           style={{
-            width: 28,
-            height: 28,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: '1.2rem',
+            height: '1.2rem',
             padding: 0,
             borderRadius: '50%',
           }}
