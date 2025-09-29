@@ -430,11 +430,11 @@ export default function App() {
       return <div style={{color: '#ffb4b4', marginBottom: 12}}>Error: {error}</div>
     }
 
-    if (rhythm && matrix) {
+    if (rhythm && displayMatrix) {
       return (
         <RhythmView
           rhythm={rhythm}
-          matrix={matrix}
+          matrix={displayMatrix}
           currentPulse={pulse}
           pulseIds={pulseIds}
           headerIds={headerIds}
