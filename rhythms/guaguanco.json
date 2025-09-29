@@ -24,6 +24,12 @@
     }
   },
   "initial_state": {
-    "tempo": 144
+    "tempo": 144,
+    "mixer": {
+      "palitos": {
+        "vol": 0.75,
+        "mute": false
+      }
+    }
   }
 }
