@@ -55,6 +55,7 @@
   - `s`: slap
   - `M`: muff
   - `B`: bass
+  - `|`: bar separator
 
   
 Rhythm parts are mapped to samples in `public/samples/map.json`.

@@ -4,14 +4,16 @@
   "pulses_per_measure": 8,
   "parts": {
     "clave": "|x..x...x|..x.x...|",
-    "palitos": {
-      "left": "|..x..x..|x....x.x|",
-      "right": "|x..x...x|..x.x...|"
-    },
-    "palitos2": {
-      "left": "|.x.x.x.x|..x..x.x|",
-      "right": "|x...x...|x...x...|"
-    },
+    "palitos": [
+      {
+        "left": "|..x..x..|x....x.x|",
+        "right": "|x..x...x|..x.x...|"
+      },
+      {
+        "left": "|.x.x.x.x|..x..x.x|",
+        "right": "|x...x...|x...x...|"
+      }
+    ],
     "conga": {
       "left": "|.t.B.t.t|..t..t.t|",
       "right": "|..t...t.|T..T..t.|"
@@ -22,13 +24,12 @@
     }
   },
   "initial_state": {
+    "tempo": 144,
     "mixer": {
-      "clave": { "vol": 1.0, "mute": false },
-      "palitos": { "vol": 1.0, "mute": false },
-      "palitos2": { "vol": 1.0, "mute": true },
-      "conga": { "vol": 1.0, "mute": false },
-      "tumba": { "vol": 1.0, "mute": false }
-    },
-    "tempo": 144
+      "palitos": {
+        "vol": 0.75,
+        "mute": false
+      }
+    }
   }
 }

@@ -1,7 +1,11 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import type {ParsedRhythm, RhythmJSON} from './rhythm/types'
 import {parseRhythm} from './rhythm/parser'
-import {buildPulseMatrix, buildDisplayMatrix, buildPlaybackMatrix} from './rhythm/sequence'
+import {
+  buildPulseMatrix,
+  buildDisplayMatrix,
+  buildPlaybackMatrixWithSelection,
+} from './rhythm/sequence'
 import {triggerVoice, type StrokeSymbol} from './audio/voices'
 import {toBaseName, loadRhythm, getMeterInfo, type SourceMode} from './utils'
 import {tryPlaySample} from './audio/samples'
@@ -21,12 +25,14 @@ export default function App() {
   >({})
   const mixerNodesRef = useRef<Map<string, GainNode>>(new Map())
   const [started, setStarted] = useState(false)
-  const [paused, setPaused] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [bpmInput, setBpmInput] = useState(bpm)
   const [rhythm, setRhythm] = useState<ParsedRhythm | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pulse, setPulse] = useState(0)
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, number>>({})
+  const [holdUntil, setHoldUntil] = useState<number | null>(null)
+  const transportStartRef = useRef<number | null>(null)
   const pulseRef = useRef(0)
   useEffect(() => {
     pulseRef.current = pulse
@@ -70,7 +76,10 @@ export default function App() {
   })
   const matrix = useMemo(() => (rhythm ? buildPulseMatrix(rhythm) : null), [rhythm])
   const displayMatrix = useMemo(() => (rhythm ? buildDisplayMatrix(rhythm) : null), [rhythm])
-  const playbackMatrix = useMemo(() => (rhythm ? buildPlaybackMatrix(rhythm) : null), [rhythm])
+  const playbackMatrix = useMemo(
+    () => (rhythm ? buildPlaybackMatrixWithSelection(rhythm, selectedVariants) : null),
+    [rhythm, selectedVariants],
+  )
 
   const pulseIds = useMemo(() => {
     const count = matrix?.totalPulses ?? 0
@@ -132,6 +141,13 @@ export default function App() {
         // Reset transport position on rhythm change
         setPulse(0)
         pulseRef.current = 0
+
+        // Initialize selectedVariants defaults (0) for each baseInstrument
+        const defaultVariants: Record<string, number> = {}
+        for (const p of parsed.parts) {
+          if (!(p.baseInstrument in defaultVariants)) defaultVariants[p.baseInstrument] = 0
+        }
+        setSelectedVariants(defaultVariants)
 
         // Apply optional initial_state (tempo and mixer)
         const DEFAULT_TEMPO = 120
@@ -248,7 +264,35 @@ export default function App() {
         }
       }
     }
-    setPaused(false)
+    // Schedule count-in clicks before starting the transport
+    if (audioCtxRef.current && rhythm) {
+      const ctx = audioCtxRef.current
+      const {pulsesPerBeat} = getMeterInfo(rhythm.timeSignature, rhythm.pulsesPerMeasure)
+      const beatsPerMeasure = Math.max(1, Math.round(rhythm.pulsesPerMeasure / pulsesPerBeat))
+      const secPerBeat = 60 / bpm
+      const t0 = ctx.currentTime + 0.02 // small safety offset
+
+      const click = (when: number, accent = false) => {
+        const osc = ctx.createOscillator()
+        const g = ctx.createGain()
+        osc.type = 'square'
+        osc.frequency.value = accent ? 2200 : 1500
+        g.gain.setValueAtTime(0.0001, when)
+        g.gain.linearRampToValueAtTime(accent ? 1.0 : 0.7, when + 0.001)
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 0.07)
+        osc.connect(g)
+        ;(outputGainRef.current ?? ctx.destination) &&
+          g.connect(outputGainRef.current ?? ctx.destination)
+        osc.start(when)
+        osc.stop(when + 0.09)
+      }
+
+      for (let i = 0; i < beatsPerMeasure; i++) {
+        click(t0 + i * secPerBeat, i === 0)
+      }
+      setHoldUntil(t0 + beatsPerMeasure * secPerBeat)
+    }
+
     setStarted(true)
   }
 
@@ -286,14 +330,9 @@ export default function App() {
     setPulse(0)
     pulseRef.current = 0
     setStarted(false)
-    setPaused(false)
   }
 
-  function pause() {
-    // Do not tear down audio nodes; simply stop advancing
-    setStarted(false)
-    setPaused(true)
-  }
+  // Removed Pause feature
 
   // Lookahead scheduler: schedule audio using AudioContext time with short lookahead
   useEffect(() => {
@@ -307,8 +346,7 @@ export default function App() {
     const secondsPerPulse = 1 / pulsesPerSecond
     const LOOKAHEAD_SEC = 0.1 // schedule 100ms ahead
     const TICK_MS = 25 // check every 25ms
-    let nextNoteTime = ctx.currentTime
-    let nextIndex = pulseRef.current
+    let nextAbs = pulseRef.current
 
     const tick = async () => {
       const modulo = playbackMatrix.totalPulses
@@ -320,35 +358,58 @@ export default function App() {
 
       // If transport is not started, either pause (hold) or stop (reset)
       if (!started) {
-        if (paused) {
-          // Hold current position and keep scheduler aligned with clock
-          nextNoteTime = ctx.currentTime
-          return
-        }
-        nextIndex = 0
+        nextAbs = 0
         setPulse(0)
-        nextNoteTime = ctx.currentTime
+        transportStartRef.current = null
         return
       }
 
-      while (nextNoteTime < ctx.currentTime + LOOKAHEAD_SEC) {
-        // UI update in sync with scheduled note
-        nextIndex = (nextIndex + 1) % modulo
-        setPulse(nextIndex)
+      // During count-in, hold scheduling until clicks finish
+      if (holdUntil && ctx.currentTime < holdUntil) {
+        return
+      }
+      if (holdUntil && ctx.currentTime >= holdUntil) {
+        // Lock transport start on count-in boundary; next scheduled pulse will be 0
+        transportStartRef.current = holdUntil
+        nextAbs = -1
+        setPulse(0)
+        setHoldUntil(null)
+      }
+
+      // Ensure a transport start exists (immediate start path)
+      if (transportStartRef.current == null) transportStartRef.current = ctx.currentTime
+
+      // Derive absolute pulse index from clock to avoid desync or stalls
+      const elapsed = Math.max(0, ctx.currentTime - transportStartRef.current)
+      const absFromTime = Math.floor(elapsed / secondsPerPulse)
+      // Schedule the pulse at the current boundary; do not skip index 0
+      const desiredNext = Math.max(-1, absFromTime - 1)
+      if (desiredNext > nextAbs) nextAbs = desiredNext
+
+      // Grid-locked scheduling using absolute time from transport start + pulse index
+      while (true) {
+        const when = transportStartRef.current + (nextAbs + 1) * secondsPerPulse
+        if (when >= ctx.currentTime + LOOKAHEAD_SEC - 1e-4) break
+        // Advance absolute pulse counter and update UI based on display index
+        nextAbs += 1
+        const disp = nextAbs % modulo
+        setPulse(disp)
 
         const destDefault = masterGainRef.current ?? ctx.destination
-        const when = nextNoteTime
         for (const row of playbackMatrix.rows) {
-          const sym = row.symbols[nextIndex]
+          const sym = row.symbols[disp]
           if (sym && sym !== '|' && sym !== '.') {
-            const node = mixerNodesRef.current.get(row.instrument)
+            const node =
+              mixerNodesRef.current.get(row.instrument) ||
+              (row.baseInstrument ? mixerNodesRef.current.get(row.baseInstrument) : undefined)
             const dest = node ?? destDefault
-            const s = instrumentSettings[row.instrument]
+            const s =
+              instrumentSettings[row.instrument] ??
+              (row.baseInstrument ? instrumentSettings[row.baseInstrument] : undefined)
             const mode: SourceMode = s?.source ?? 'sample'
             const stroke = sym as StrokeSymbol
             let usedSample = false
             if (mode === 'sample') {
-              // Attempt to play sample; tryPlaySample returns true if it will play
               const sampleInst =
                 (row as {sampleInstrument?: string}).sampleInstrument ?? row.instrument
               usedSample = tryPlaySample(ctx, dest, sampleInst, stroke, when)
@@ -358,13 +419,11 @@ export default function App() {
             }
           }
         }
-        nextNoteTime += secondsPerPulse
       }
     }
-
     const id = setInterval(tick, TICK_MS)
     return () => clearInterval(id)
-  }, [bpm, rhythm, playbackMatrix, started, paused, instrumentSettings])
+  }, [bpm, rhythm, playbackMatrix, started, instrumentSettings, holdUntil])
 
   // Apply master volume changes dynamically (post-compressor output gain)
   useEffect(() => {
@@ -386,11 +445,11 @@ export default function App() {
 
   // Log transport state changes
   useEffect(() => {
-    const transport = started ? 'started' : paused ? 'paused' : 'stopped'
+    const transport = started ? 'started' : 'stopped'
     const audioState = audioCtxRef.current?.state ?? 'uninitialized'
     // eslint-disable-next-line no-console
     console.log(`Transport: ${transport} · Audio: ${audioState}`)
-  }, [started, paused])
+  }, [started])
 
   // Ensure mixer nodes exist and are wired for the current matrix even when switching rhythms mid-play
   useEffect(() => {
@@ -486,10 +545,7 @@ export default function App() {
         <button type="button" onClick={start} disabled={started}>
           Start
         </button>
-        <button type="button" onClick={pause} disabled={!started}>
-          Pause
-        </button>
-        <button type="button" onClick={stop} disabled={!(started || paused)}>
+        <button type="button" onClick={stop} disabled={!started}>
           Stop
         </button>
 
@@ -526,6 +582,10 @@ export default function App() {
           matrix={matrix}
           instrumentSettings={instrumentSettings}
           setInstrumentSettings={setInstrumentSettings}
+          selectedVariants={selectedVariants}
+          onChangeVariant={(base: string, idx: number) =>
+            setSelectedVariants(prev => ({...prev, [base]: idx}))
+          }
         />
       )}
     </div>

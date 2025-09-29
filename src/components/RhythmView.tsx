@@ -11,12 +11,16 @@ interface RhythmViewProps {
   headerIds: string[]
 }
 export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: RhythmViewProps) {
-  const renderInstrumentLabel = (raw: string, isGroupStart: boolean): JSX.Element => {
+  const renderInstrumentLabel = (
+    raw: string,
+    isVariantStart: boolean,
+    leftOverride?: string,
+  ): JSX.Element => {
     const [baseRaw, subRaw] = raw.includes(':') ? raw.split(':') : [raw, '']
     const base = (baseRaw ?? '').trim()
     const sub = (subRaw ?? '').trim().toLowerCase()
     const sideLabel = sub === 'left' ? 'L' : sub === 'right' ? 'R' : (subRaw ?? '').trim()
-    const leftLabel = isGroupStart ? base : ''
+    const leftLabel = isVariantStart ? (leftOverride ?? base) : ''
     return (
       <div className="instrument-name">
         <span className="inst-left">{leftLabel}</span>
@@ -25,22 +29,38 @@ export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: 
     )
   }
 
-  // Base instrument label (text before ':') for grouping
+  // Base instrument label for grouping: prefer metadata, fallback to text before ':'
   function getBaseLabel(i: number, rows: PulseMatrix['rows']): string {
-    return (rows[i]?.instrument ?? '').split(':')[0].trim()
+    const r = rows[i]
+    if (!r) return ''
+    if (r.baseInstrument) return r.baseInstrument
+    return (r.instrument ?? '').split(':')[0].trim()
   }
 
-  // Render a single matrix row with group separator, instrument label, and cells
+  // Render a single matrix row with separators, variant labeling, and cells
   function renderMatrixRow(row: PulseMatrix['rows'][number], idx: number): JSX.Element {
     const rows = matrix.rows
-    const isGroupStart = idx === 0 || getBaseLabel(idx, rows) !== getBaseLabel(idx - 1, rows)
+    const baseNow = getBaseLabel(idx, rows)
+    const basePrev = idx > 0 ? getBaseLabel(idx - 1, rows) : ''
+    const vNow = row.variantIndex ?? 0
+    const vPrev = idx > 0 ? (rows[idx - 1].variantIndex ?? 0) : -1
+    const isGroupStart = idx === 0 || baseNow !== basePrev
+    const isVariantStart = idx === 0 || baseNow !== basePrev || vNow !== vPrev
+    const leftOverride = isVariantStart
+      ? vNow > 0
+        ? `${baseNow} alt(${vNow})`
+        : baseNow
+      : undefined
     return (
       <Fragment key={`${row.instrument}-${idx}`}>
         {isGroupStart && idx > 0 && (
           <div className="instrument-sep" style={{gridColumn: '1 / -1'}} aria-hidden="true" />
         )}
+        {!isGroupStart && isVariantStart && idx > 0 && (
+          <div className="instrument-sep" style={{gridColumn: '1 / -1'}} aria-hidden="true" />
+        )}
         <div style={{display: 'contents'}}>
-          {renderInstrumentLabel(row.instrument, isGroupStart)}
+          {renderInstrumentLabel(row.instrument, isVariantStart, leftOverride)}
           {row.symbols.map((sym, i) => {
             const cell = (
               <div
@@ -97,13 +117,13 @@ export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: 
 
   return (
     <div className="rhythm-card">
-      <h2 style={{marginTop: 0}}>{rhythm.name}</h2>
-      <div>
-        <span>
-          Time Signature: {rhythm.timeSignature.numerator}/{rhythm.timeSignature.denominator}
+      <h2 style={{marginTop: 0, display: 'flex', alignItems: 'baseline', gap: 12}}>
+        <span>{rhythm.name}</span>
+        <span style={{fontSize: 14, fontWeight: 400, opacity: 0.75}}>
+          {rhythm.timeSignature.numerator}/{rhythm.timeSignature.denominator} ·{' '}
+          {rhythm.pulsesPerMeasure} pulses/measure
         </span>
-        <span style={{marginLeft: '16px'}}>Pulses per Measure: {rhythm.pulsesPerMeasure}</span>
-      </div>
+      </h2>
 
       <h3>Tablature</h3>
       {/* Grid with narrow separator columns after each measure */}
