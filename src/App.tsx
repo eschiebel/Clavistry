@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import type {ParsedRhythm, RhythmJSON} from './rhythm/types'
 import {parseRhythm} from './rhythm/parser'
 import {
@@ -76,6 +76,13 @@ export default function App() {
     } catch {}
     return 'bembe.json'
   })
+
+  const handleRhythmChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const file = e.target.value
+    if (file === 'coming-soon') return
+    setSelectedRhythmFile(file)
+  }, [])
+
   const matrix = useMemo(() => (rhythm ? buildPulseMatrix(rhythm) : null), [rhythm])
   const displayMatrix = useMemo(() => (rhythm ? buildDisplayMatrix(rhythm) : null), [rhythm])
   const playbackMatrix = useMemo(
@@ -548,7 +555,7 @@ export default function App() {
           Rhythm
           <select
             value={selectedRhythmFile}
-            onChange={e => setSelectedRhythmFile(e.target.value)}
+            onChange={handleRhythmChange}
             style={{padding: '4px 6px'}}
           >
             {RHYTHM_OPTIONS.map(opt => (
@@ -556,6 +563,7 @@ export default function App() {
                 {opt.label}
               </option>
             ))}
+            <option value="coming-soon">More soon...</option>
           </select>
         </label>
         <button type="button" onClick={start} disabled={started}>
