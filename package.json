@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "check": "biome check .",
+    "check": "tsc --noEmit && biome check .",
     "format": "biome format .",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"

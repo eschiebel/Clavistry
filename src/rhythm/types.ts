@@ -5,6 +5,7 @@ export type StrokeSymbol =
   | 'B' // bass
   | 'p' // palm
   | 't' // touch
+  | 'r' // rim
   | 'x' // strike (e.g., bell)
   | '.' // rest
   | '|' // bar separator
