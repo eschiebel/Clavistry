@@ -32,6 +32,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [pulse, setPulse] = useState(0)
   const [selectedVariants, setSelectedVariants] = useState<Record<string, number>>({})
+  const [forms, setForms] = useState<NonNullable<RhythmJSON['forms']> | null>(null)
+  const [selectedFormIdx, setSelectedFormIdx] = useState<number | null>(null)
   const [holdUntil, setHoldUntil] = useState<number | null>(null)
   const transportStartRef = useRef<number | null>(null)
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -49,6 +51,8 @@ export default function App() {
       {label: 'Rumba Columbia', file: 'columbia.json'},
       {label: 'Tumbao', file: 'tumbao.json'},
       {label: 'Conga de Comparsa', file: 'conga_de_comparsa.json'},
+      {label: 'Yanvalou', file: 'yanvalou.json'},
+      {label: 'Ibo', file: 'ibo.json'},
     ],
     [],
   )
@@ -99,6 +103,16 @@ export default function App() {
     )
   }, [matrix?.totalPulses])
 
+  // Helper to apply a form's variants en masse
+  const applyForm = useCallback(
+    (idx: number) => {
+      setSelectedFormIdx(idx)
+      const v = forms?.[idx]?.variants
+      if (v) setSelectedVariants(prev => ({...prev, ...v}))
+    },
+    [forms],
+  )
+
   // Debounce UI tempo changes into the effective bpm used by the scheduler
   useEffect(() => {
     const id = setTimeout(() => {
@@ -144,7 +158,7 @@ export default function App() {
   useEffect(() => {
     ;(async () => {
       try {
-        const {parsed, initial} = await loadRhythm(selectedRhythmFile)
+        const {parsed, initial, raw} = await loadRhythm(selectedRhythmFile)
         setRhythm(parsed)
         setError(null)
         // Reset transport position on rhythm change
@@ -157,6 +171,17 @@ export default function App() {
           if (!(p.baseInstrument in defaultVariants)) defaultVariants[p.baseInstrument] = 0
         }
         setSelectedVariants(defaultVariants)
+
+        // Capture optional forms from the raw JSON
+        const f = raw.forms && Array.isArray(raw.forms) && raw.forms.length > 0 ? raw.forms : null
+        setForms(f)
+        if (f) {
+          setSelectedFormIdx(0)
+          const v0 = f[0]?.variants
+          if (v0) setSelectedVariants(prev => ({...prev, ...v0}))
+        } else {
+          setSelectedFormIdx(null)
+        }
 
         // Apply optional initial_state (tempo and mixer)
         const DEFAULT_TEMPO = 120
@@ -597,6 +622,8 @@ export default function App() {
           />
           <span style={{width: 48, textAlign: 'right'}}>{(masterVol * 100).toFixed(0)}%</span>
         </label>
+
+        {/* Form control moved into Mixer */}
       </div>
 
       {renderRhythmView()}
@@ -610,6 +637,9 @@ export default function App() {
           onChangeVariant={(base: string, idx: number) =>
             setSelectedVariants(prev => ({...prev, [base]: idx}))
           }
+          forms={forms ?? undefined}
+          selectedFormIdx={selectedFormIdx ?? undefined}
+          onChangeFormIdx={applyForm}
         />
       )}
 

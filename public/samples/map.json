@@ -7,6 +7,8 @@
   "conga:T": { "file": "/samples/conga/conga-tone.wav" },
   "conga:s": { "file": "/samples/conga/conga-slap.wav" },
   "conga:M": { "file": "/samples/conga/conga-muff.wav" },
+  "conga:B": { "file": "/samples/conga/conga-bass.wav" },
+  "conga:r": { "file": "/samples/conga/conga-rim.wav" },
   "tumba:B": { "file": "/samples/tumba/tumba-bass.wav" },
   "tumba:T": { "file": "/samples/tumba/tumba-tone.wav" },
   "tumba:M": { "file": "/samples/tumba/tumba-muff.wav" },
@@ -18,5 +20,18 @@
   "cowbell": {
     "open:x": { "file": "/samples/bell/cowbell-open.wav" },
     "closed:x": { "file": "/samples/bell/cowbell-closed.wav" }
-  }
+  },
+  "ogan:x": { "file": "/samples/bell/hoe.wav" },
+  "segunde:T": { "file": "/samples/conga/conga-tone.wav" },
+  "segunde:s": { "file": "/samples/conga/conga-slap.wav" },
+  "segunde:M": { "file": "/samples/conga/conga-muff.wav" },
+  "segunde:r": { "file": "/samples/conga/conga-rim.wav" },
+  "maman:T": { "file": "/samples/tumba/tumba-tone.wav" },
+  "maman:s": { "file": "/samples/tumba/tumba-slap.wav" },
+  "maman:M": { "file": "/samples/tumba/tumba-muff.wav" },
+  "maman:x": { "file": "/samples/maman/baget-shell.wav" },
+  "maman baget:T": { "file": "/samples/maman/baget-tone.wav" },
+  "maman baget:s": { "file": "/samples/maman/baget-slap.wav" },
+  "maman baget:x": { "file": "/samples/maman/baget-shell.wav" },
+  "boula:x": { "file": "/samples/boula/boula.wav" }
 }

@@ -1,6 +1,6 @@
 import type {ParsedPart, ParsedRhythm, PartValue, RhythmJSON, StrokeSymbol} from './types'
 
-const VALID_STROKES = new Set<StrokeSymbol>(['T', 's', 'M', 'B', 'p', 't', 'x', '.', '|'])
+const VALID_STROKES = new Set<StrokeSymbol>(['T', 's', 'M', 'B', 'p', 't', 'r', 'x', '.', '|'])
 
 export function parseTimeSignature(ts: string): {numerator: number; denominator: number} {
   const m = ts.match(/^(\d+)\/(\d+)$/)

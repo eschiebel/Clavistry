@@ -1,0 +1,48 @@
+{
+  "name": "Ibo",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "forms": [
+    {
+      "name": "Regular",
+      "variants": { "ogan": 0, "boula": 0, "segunde": 0, "maman": 0 }
+    },
+    {
+      "name": "Kase",
+      "variants": { "ogan": 0, "boula": 0, "segunde": 0, "maman": 1 }
+    }
+  ],
+  "parts": {
+    "ogan": ["|xx.xx.x.|x.x.x.x.|"],
+    "boula": ["|xxxxxxxx|xxxxxxxx|"],
+    "segunde": [
+      {
+        "left": "|.T..T..B|...T...B|",
+        "right": "|T..T..r.T.T.T.r.|"
+      },
+      {
+        "left": "|.T.T.T.T|.T.T.T.T|",
+        "right": "|T.T.T.T.T.T.T.T|"
+      }
+    ],
+    "maman": [
+      {
+        "left": "|B...M...|M...M...|",
+        "baget": "|x..x..x.|x..x..T.|"
+      },
+      {
+        "left": "|T..p....|p..p...B|",
+        "baget": "|.T..s.s.|.s..s...|"
+      }
+    ]
+  },
+  "initial_state": {
+    "tempo": 144,
+    "mixer": {
+      "ogan": { "vol": 0.4 },
+      "boula": { "vol": 0.25 },
+      "segunde": { "vol": 0.7 },
+      "maman": { "vol": 1.5 }
+    }
+  }
+}

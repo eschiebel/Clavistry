@@ -60,6 +60,12 @@ export function AboutClavistry({open, onClose}: AboutClavistryProps) {
           </tr>
           <tr>
             <td>
+              <code>r</code>
+            </td>
+            <td>Rim</td>
+          </tr>
+          <tr>
+            <td>
               <code>x</code>
             </td>
             <td>Strike (e.g. a bell hit)</td>

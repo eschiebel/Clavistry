@@ -4,6 +4,7 @@ import type {PulseMatrix} from '../rhythm/sequence'
 import type {SourceMode} from '../utils'
 
 type InstrumentSettings = Record<string, {vol: number; mute: boolean; source?: SourceMode}>
+type FormDef = {name: string; variants: Record<string, number>}
 
 interface MixerProps {
   matrix: PulseMatrix
@@ -11,6 +12,9 @@ interface MixerProps {
   setInstrumentSettings: React.Dispatch<React.SetStateAction<InstrumentSettings>>
   selectedVariants: Record<string, number>
   onChangeVariant: (base: string, idx: number) => void
+  forms?: FormDef[] | null
+  selectedFormIdx?: number | null
+  onChangeFormIdx?: (idx: number) => void
 }
 
 export function Mixer({
@@ -19,6 +23,9 @@ export function Mixer({
   setInstrumentSettings,
   selectedVariants,
   onChangeVariant,
+  forms,
+  selectedFormIdx,
+  onChangeFormIdx,
 }: MixerProps) {
   // Group rows by baseInstrument
   const groups = new Map<string, typeof matrix.rows>()
@@ -37,6 +44,38 @@ export function Mixer({
   return (
     <div className="mixer-card">
       <h2>Mixer</h2>
+      {forms &&
+        forms.length > 0 &&
+        (forms.length === 2 ? (
+          <div style={{display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px 494px'}}>
+            <span>Form:</span>
+            <Toggle
+              value={(selectedFormIdx ?? 0) as number}
+              onValue={1}
+              offValue={0}
+              onLabel={forms[1]?.name || 'B'}
+              offLabel={forms[0]?.name || 'A'}
+              onChange={val => onChangeFormIdx?.(Number(val))}
+            />
+          </div>
+        ) : (
+          <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
+            <label style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
+              Form
+              <select
+                value={selectedFormIdx ?? 0}
+                onChange={e => onChangeFormIdx?.(Number(e.target.value))}
+                style={{padding: '4px 6px'}}
+              >
+                {forms.map((f, i) => (
+                  <option key={`form-${f.name || i}`} value={i}>
+                    {f.name || `Form ${i + 1}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ))}
       <div className="mixer-grid">
         <div className="mixer-header">Instrument</div>
         <div className="mixer-header mixer-center">Mute</div>

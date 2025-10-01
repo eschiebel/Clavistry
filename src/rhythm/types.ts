@@ -21,6 +21,12 @@ export interface RhythmJSON {
   time_signature: string // e.g. "6/8"
   parts: Record<string, PartValue> // instrument -> tablature line(s)
   pulses_per_measure?: number // optional explicit grid resolution per measure
+  // Optional global form presets to select variant indices per base instrument.
+  // This is UI metadata; parser ignores it, App uses it to set selectedVariants.
+  forms?: Array<{
+    name: string
+    variants: Record<string, number>
+  }>
   initial_state?: {
     mixer?: Record<string, MixerInstrumentState>
     tempo?: number
