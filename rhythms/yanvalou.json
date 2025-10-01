@@ -1,0 +1,46 @@
+{
+  "name": "Yanvalou",
+  "time_signature": "6/8",
+  "pulses_per_measure": 6,
+  "forms": [
+    {
+      "name": "Regular",
+      "variants": { "ogan": 0, "boula": 0, "segunde": 0, "maman": 0 }
+    },
+    {
+      "name": "Kase",
+      "variants": { "ogan": 0, "boula": 0, "segunde": 1, "maman": 1 }
+    }
+  ],
+  "parts": {
+    "ogan": ["|x.x.x.|xx.x.x|"],
+    "boula": ["|.xx.xx|.xx.xx|"],
+    "segunde": [
+      {
+        "left": "|B.....|B.t...|",
+        "right": "|..T.T.|...T..|"
+      },
+      {
+        "left": "|B...B.|..B...|",
+        "right": "|..T...|T..T..|"
+      }
+    ],
+    "maman": [
+      {
+        "left": "|B.M...|BT....|",
+        "right": "|x..x..|x..x..|"
+      },
+      {
+        "left": "|T.p...|p.t.BB|",
+        "baget": "|T...s.|...x..|"
+      }
+    ]
+  },
+  "initial_state": {
+    "tempo": 120,
+    "mixer": {
+      "ogan": { "vol": 0.5 },
+      "boula": { "vol": 0.75 }
+    }
+  }
+}
