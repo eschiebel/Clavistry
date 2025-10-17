@@ -25,7 +25,7 @@
     }
   },
   "initial_state": {
-    "tempo": 144,
+    "tempo": 180,
     "mixer": {
       "agogo bell": { "vol": 0.75, "mute": false },
       "cowbell": { "vol": 0.75, "mute": false },

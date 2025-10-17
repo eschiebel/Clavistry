@@ -13,8 +13,12 @@
     }
   ],
   "parts": {
-    "ogan": ["|xx.xx.x.|x.x.x.x.|"],
-    "boula": ["|xxxxxxxx|xxxxxxxx|"],
+    "ogan": [
+      {
+        "open": "|xx.xx.x.|x.x.x.x.|"
+      }
+    ],
+    "boula stick": ["|xxxxxxxx|xxxxxxxx|"],
     "segunde": [
       {
         "left": "|.T..T..B|...T...B|",
@@ -39,10 +43,10 @@
   "initial_state": {
     "tempo": 144,
     "mixer": {
-      "ogan": { "vol": 0.4 },
-      "boula": { "vol": 0.25 },
-      "segunde": { "vol": 0.7 },
-      "maman": { "vol": 1.5 }
+      "ogan": { "vol": 0.5 },
+      "boula stick": { "vol": 0.4 },
+      "segunde": { "vol": 0.8 },
+      "maman": { "vol": 1.0 }
     }
   }
 }

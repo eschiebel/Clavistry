@@ -4,6 +4,7 @@
   "palitos:x": { "file": "/samples/wood/palitos.wav" },
   "quinto:T": { "file": "/samples/quinto/quinto-tone.wav" },
   "quinto:s": { "file": "/samples/quinto/quinto-slap.wav" },
+  "quinto:r": { "file": "/samples/quinto/quinto-rim.wav" },
   "conga:T": { "file": "/samples/conga/conga-tone.wav" },
   "conga:s": { "file": "/samples/conga/conga-slap.wav" },
   "conga:M": { "file": "/samples/conga/conga-muff.wav" },
@@ -21,17 +22,26 @@
     "open:x": { "file": "/samples/bell/cowbell-open.wav" },
     "closed:x": { "file": "/samples/bell/cowbell-closed.wav" }
   },
-  "ogan:x": { "file": "/samples/bell/hoe.wav" },
+  "ogan": {
+    "open:x": { "file": "/samples/bell/hoe.wav" },
+    "closed:x": { "file": "/samples/bell/hoe-closed.wav" }
+  },
   "segunde:T": { "file": "/samples/conga/conga-tone.wav" },
   "segunde:s": { "file": "/samples/conga/conga-slap.wav" },
   "segunde:M": { "file": "/samples/conga/conga-muff.wav" },
+  "segunde:B": { "file": "/samples/conga/conga-bass.wav" },
   "segunde:r": { "file": "/samples/conga/conga-rim.wav" },
   "maman:T": { "file": "/samples/tumba/tumba-tone.wav" },
   "maman:s": { "file": "/samples/tumba/tumba-slap.wav" },
   "maman:M": { "file": "/samples/tumba/tumba-muff.wav" },
+  "maman:B": { "file": "/samples/tumba/tumba-bass.wav" },
   "maman:x": { "file": "/samples/maman/baget-shell.wav" },
   "maman baget:T": { "file": "/samples/maman/baget-tone.wav" },
   "maman baget:s": { "file": "/samples/maman/baget-slap.wav" },
   "maman baget:x": { "file": "/samples/maman/baget-shell.wav" },
-  "boula:x": { "file": "/samples/boula/boula.wav" }
+  "boula stick:x": { "file": "/samples/boula/boula.wav" },
+  "boula hand:T": { "file": "/samples/quinto/quinto-tone.wav" },
+  "boula hand:s": { "file": "/samples/quinto/quinto-slap.wav" },
+  "boula hand:r": { "file": "/samples/quinto/quinto-rim.wav" },
+  "boula hand:B": { "file": "/samples/quinto/quinto-bass.wav" }
 }
