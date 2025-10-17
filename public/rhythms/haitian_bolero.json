@@ -1,0 +1,32 @@
+{
+  "name": "Haitian Bolero",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "parts": {
+    "ogan": {
+      "closed": "|..xx..xx|..xx..xx|",
+      "open": "|x...x...|x...x...|"
+    },
+    "boula hand": {
+      "left": "|.rr.rr.r|.rr.rr.r|",
+      "right": "|T..T..B.|T..T..B.|"
+    },
+    "segunde": {
+      "left": "|.rr.rr.r.rr.rr.r|",
+      "right": "|B..B..T.|B..B..T.|"
+    },
+    "maman": {
+      "open": "|.B.t.T.t|.B.t.T.t|",
+      "closed": "|B.t.T.t.|B.t.T.t.|"
+    }
+  },
+  "initial_state": {
+    "tempo": 144,
+    "mixer": {
+      "bell": { "vol": 1.0, "mute": false },
+      "boula hand": { "vol": 1.0, "mute": false },
+      "segunde": { "vol": 1.0, "mute": false },
+      "maman": { "vol": 1.0, "mute": false }
+    }
+  }
+}

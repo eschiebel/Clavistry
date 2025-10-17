@@ -13,8 +13,8 @@
     }
   ],
   "parts": {
-    "ogan": ["|x.x.x.|xx.x.x|"],
-    "boula": ["|.xx.xx|.xx.xx|"],
+    "ogan": [{ "open": "|x.x.x.|xx.x.x|" }],
+    "boula stick": ["|.xx.xx|.xx.xx|"],
     "segunde": [
       {
         "left": "|B.....|B.t...|",
@@ -39,8 +39,8 @@
   "initial_state": {
     "tempo": 120,
     "mixer": {
-      "ogan": { "vol": 0.5 },
-      "boula": { "vol": 0.75 }
+      "ogan": { "vol": 0.6 },
+      "boula stick": { "vol": 0.6 }
     }
   }
 }

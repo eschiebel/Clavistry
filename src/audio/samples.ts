@@ -142,6 +142,9 @@ export function tryPlaySample(
       g.gain.value = trim
       src.connect(g).connect(destination)
       const t = Math.max(startTime, ctx.currentTime)
+      // TEMP DEBUG: log scheduled sample key and time
+      // eslint-disable-next-line no-console
+      console.log('[samples] schedule', key, '->', entry.file, 'at', t.toFixed(3), 's')
       src.start(t)
     })
     .catch(err => {

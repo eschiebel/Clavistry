@@ -53,6 +53,7 @@ export default function App() {
       {label: 'Conga de Comparsa', file: 'conga_de_comparsa.json'},
       {label: 'Yanvalou', file: 'yanvalou.json'},
       {label: 'Ibo', file: 'ibo.json'},
+      {label: 'Haitian Bolero', file: 'haitian_bolero.json'},
     ],
     [],
   )
