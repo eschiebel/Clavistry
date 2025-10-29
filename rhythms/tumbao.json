@@ -1,9 +1,9 @@
 {
-  "name": "Tubmao",
+  "name": "Tubmao (Marcha)",
   "time_signature": "4/4",
   "pulses_per_measure": 8,
   "parts": {
-    "clave": "|x..x..x.|..x.x...|",
+    "clave": "|..x.x...|x..x..x.|",
     "quinto": {
       "left": "|pt.tpt..|pt.tpt..|",
       "right": "|..s...TT|..s...TT|"
