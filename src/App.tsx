@@ -49,7 +49,7 @@ export default function App() {
       {label: 'Rumba Yesa', file: 'yesa.json'},
       {label: 'Rumba Guaguancó', file: 'guaguanco.json'},
       {label: 'Rumba Columbia', file: 'columbia.json'},
-      {label: 'Tumbao', file: 'tumbao.json'},
+      {label: 'Tumbao (Marcha)', file: 'tumbao.json'},
       {label: 'Conga de Comparsa', file: 'conga_de_comparsa.json'},
       {label: 'Yanvalou', file: 'yanvalou.json'},
       {label: 'Ibo', file: 'ibo.json'},
