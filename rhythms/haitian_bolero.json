@@ -16,8 +16,8 @@
       "right": "|B..B..T.|B..B..T.|"
     },
     "maman": {
-      "open": "|.B.t.T.t|.B.t.T.t|",
-      "closed": "|B.t.T.t.|B.t.T.t.|"
+      "left": "|.B.t.T.t|.B.t.T.t|",
+      "right": "|B.t.T.t.|B.t.T.t.|"
     }
   },
   "initial_state": {

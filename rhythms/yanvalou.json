@@ -13,7 +13,7 @@
     }
   ],
   "parts": {
-    "ogan": [{ "open": "|x.x.x.|xx.x.x|" }],
+    "ogan": ["|x.x.x.|xx.x.x|"],
     "boula stick": ["|.xx.xx|.xx.xx|"],
     "segunde": [
       {
