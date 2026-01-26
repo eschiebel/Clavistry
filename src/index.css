@@ -194,9 +194,13 @@ button:disabled {
 
   .mixer-grid {
     display: grid;
-    grid-template-columns: 160px 50px 260px 200px 160px;
+    grid-template-columns: 160px 50px 260px minmax(200px, 1fr) 160px;
     gap: 8px;
     align-items: center;
+  }
+
+  .mixer-grid > div {
+    min-width: 0;
   }
 
   .mixer-header {
@@ -228,8 +232,9 @@ button:disabled {
     display: inline-flex;
     gap: 8px;
     align-items: center;
-    flex-wrap: nowrap;
-    white-space: nowrap;
+    flex-wrap: wrap;
+    white-space: normal;
+    max-width: 100%;
     border: none;
     padding: 0;
     margin: 0;

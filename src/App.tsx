@@ -54,6 +54,7 @@ export default function App() {
       {label: 'Yanvalou', file: 'yanvalou.json'},
       {label: 'Ibo', file: 'ibo.json'},
       {label: 'Haitian Bolero', file: 'haitian_bolero.json'},
+      {label: 'Clave', file: 'clave.json'},
     ],
     [],
   )
@@ -532,6 +533,7 @@ export default function App() {
           currentPulse={pulse}
           pulseIds={pulseIds}
           headerIds={headerIds}
+          forms={forms ?? undefined}
         />
       )
     }

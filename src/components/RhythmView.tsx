@@ -3,14 +3,49 @@ import {getMeterInfo} from '../utils'
 import type {ParsedRhythm} from '../rhythm/types'
 import type {PulseMatrix} from '../rhythm/sequence'
 
+type FormDef = {name: string; variants: Record<string, number>}
+
 interface RhythmViewProps {
   rhythm: ParsedRhythm
   matrix: PulseMatrix
   currentPulse: number
   pulseIds: string[]
   headerIds: string[]
+  forms?: FormDef[] | null
 }
-export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: RhythmViewProps) {
+
+export function RhythmView({
+  rhythm,
+  matrix,
+  currentPulse,
+  pulseIds,
+  headerIds,
+  forms,
+}: RhythmViewProps) {
+  const variantsByBase = new Map<string, Set<number>>()
+  for (const r of matrix.rows) {
+    const base = r.baseInstrument ?? (r.instrument ?? '').split(':')[0].trim()
+    const set = variantsByBase.get(base) ?? new Set<number>()
+    set.add(r.variantIndex ?? 0)
+    variantsByBase.set(base, set)
+  }
+
+  const baseHasMultipleVariants = (base: string): boolean => {
+    const set = variantsByBase.get(base)
+    return (set?.size ?? 0) > 1
+  }
+
+  const getVariantFormName = (base: string, idx: number): string | null => {
+    if (!forms || forms.length === 0) return null
+    const hit = forms.find(
+      f =>
+        !!f.variants &&
+        Object.prototype.hasOwnProperty.call(f.variants, base) &&
+        f.variants[base] === idx,
+    )
+    return hit?.name ?? null
+  }
+
   const renderInstrumentLabel = (
     raw: string,
     isVariantStart: boolean,
@@ -46,10 +81,14 @@ export function RhythmView({rhythm, matrix, currentPulse, pulseIds, headerIds}: 
     const vPrev = idx > 0 ? (rows[idx - 1].variantIndex ?? 0) : -1
     const isGroupStart = idx === 0 || baseNow !== basePrev
     const isVariantStart = idx === 0 || baseNow !== basePrev || vNow !== vPrev
+    const formName =
+      isVariantStart && baseHasMultipleVariants(baseNow) ? getVariantFormName(baseNow, vNow) : null
     const leftOverride = isVariantStart
-      ? vNow > 0
-        ? `${baseNow} alt(${vNow})`
-        : baseNow
+      ? formName
+        ? `${baseNow} ${formName}`
+        : vNow > 0
+          ? `${baseNow} alt(${vNow})`
+          : baseNow
       : undefined
     return (
       <Fragment key={`${row.instrument}-${idx}`}>

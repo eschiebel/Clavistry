@@ -9,15 +9,11 @@
     },
     {
       "name": "Kase",
-      "variants": { "ogan": 0, "boula": 0, "segunde": 0, "maman": 1 }
+      "variants": { "ogan": 0, "boula": 0, "segunde": 1, "maman": 1 }
     }
   ],
   "parts": {
-    "ogan": [
-      {
-        "open": "|xx.xx.x.|x.x.x.x.|"
-      }
-    ],
+    "ogan": ["|xx.xx.x.|x.x.x.x.|"],
     "boula stick": ["|xxxxxxxx|xxxxxxxx|"],
     "segunde": [
       {

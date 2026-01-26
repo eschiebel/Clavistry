@@ -27,6 +27,19 @@ export function Mixer({
   selectedFormIdx,
   onChangeFormIdx,
 }: MixerProps) {
+  const getVariantLabel = (base: string, idx: number): string => {
+    if (forms && forms.length > 0) {
+      const hit = forms.find(
+        f =>
+          !!f.variants &&
+          Object.prototype.hasOwnProperty.call(f.variants, base) &&
+          f.variants[base] === idx,
+      )
+      if (hit?.name) return hit.name
+    }
+    return idx === 0 ? 'default' : `alt(${idx})`
+  }
+
   // Group rows by baseInstrument
   const groups = new Map<string, typeof matrix.rows>()
   const variantsByBase = new Map<string, number[]>()
@@ -149,7 +162,7 @@ export function Mixer({
                           checked={(selectedVariants[base] ?? 0) === idx}
                           onChange={() => onChangeVariant(base, idx)}
                         />
-                        <span>{idx === 0 ? 'default' : `alt(${idx})`}</span>
+                        <span>{getVariantLabel(base, idx)}</span>
                       </label>
                     ))}
                   </fieldset>

@@ -1,0 +1,32 @@
+{
+  "name": "Clave",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "forms": [
+    {
+      "name": "2/3 Son",
+      "variants": { "clave": 0 }
+    },
+    {
+      "name": "3/2 Son",
+      "variants": { "clave": 1 }
+    },
+    {
+      "name": "Rumba",
+      "variants": { "clave": 2 }
+    }
+  ],
+  "parts": {
+    "clave": [
+      "|..x.x...|x..x..x.|",
+      "|x..x..x.|..x.x...|",
+      "|x..x...x|..x.x...|"
+    ]
+  },
+  "initial_state": {
+    "tempo": 180,
+    "mixer": {
+      "clave": { "vol": 1.0, "mute": false }
+    }
+  }
+}
