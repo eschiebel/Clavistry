@@ -14,13 +14,18 @@
     {
       "name": "Rumba",
       "variants": { "clave": 2 }
+    },
+    {
+      "name": "Bosa Nova",
+      "variants": { "clave": 3 }
     }
   ],
   "parts": {
     "clave": [
       "|..x.x...|x..x..x.|",
       "|x..x..x.|..x.x...|",
-      "|x..x...x|..x.x...|"
+      "|x..x...x|..x.x...|",
+      "|x..x..x.|..x..x..|"
     ]
   },
   "initial_state": {
