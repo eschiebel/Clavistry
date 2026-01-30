@@ -1,0 +1,18 @@
+{
+  "name": "Plena",
+  "time_signature": "4/4",
+  "pulses_per_measure": 16,
+  "parts": {
+    "quinto": [
+      "|....s........s..|",
+      "|....s......s.s..|",
+      "|....s.......ss..|"
+    ],
+    "conga": "|T.......T.......|",
+    "tumba": "|T.t.T.t.T.t.T.t.|"
+  },
+  "initial_state": {
+    "tempo": 120,
+    "mixer": {}
+  }
+}
