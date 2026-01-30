@@ -131,15 +131,22 @@ export function RhythmView({
 
   function renderHeaderCells(): JSX.Element[] {
     const {pulsesPerBeat, isCompound} = getMeterInfo(rhythm.timeSignature, matrix.pulsesPerMeasure)
-    const simpleSyllables = ['1', '&']
-    const compoundSyllables = ['1', '&', 'a']
+    const getSubLabel = (posInBeat: number): string => {
+      if (posInBeat === 0) return ''
+      if (isCompound) {
+        if (pulsesPerBeat === 3) return ['', '&', 'a'][posInBeat] ?? ''
+        return posInBeat === Math.floor(pulsesPerBeat / 2) ? '&' : ''
+      }
+      if (pulsesPerBeat === 2) return ['', '&'][posInBeat] ?? ''
+      if (pulsesPerBeat === 4) return ['', ' ', '&', ' '][posInBeat] ?? ''
+      return pulsesPerBeat % 2 === 0 && posInBeat === pulsesPerBeat / 2 ? '&' : ''
+    }
     const cells: JSX.Element[] = []
     for (let i = 0; i < matrix.totalPulses; i++) {
       const posInBeat = i % pulsesPerBeat
-      const syllables = isCompound ? compoundSyllables : simpleSyllables
       const pulsesIntoMeasure = i % rhythm.pulsesPerMeasure
       const beatInMeasure = Math.floor(pulsesIntoMeasure / pulsesPerBeat) + 1
-      const label = posInBeat === 0 ? String(beatInMeasure) : (syllables[posInBeat] ?? '')
+      const label = posInBeat === 0 ? String(beatInMeasure) : getSubLabel(posInBeat)
       cells.push(
         <div key={headerIds[i]} className="header-label">
           {label}
