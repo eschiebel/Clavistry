@@ -56,6 +56,7 @@ export default function App() {
       {label: 'Ibo', file: 'ibo.json'},
       {label: 'Haitian Bolero', file: 'haitian_bolero.json'},
       {label: 'Clave', file: 'clave.json'},
+      {label: 'Timbales Cascara', file: 'timbales-cascara.json'},
     ],
     [],
   )

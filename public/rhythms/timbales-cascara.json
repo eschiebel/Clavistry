@@ -1,0 +1,12 @@
+{
+  "name": "Timbales Cascara",
+  "time_signature": "4/4",
+  "pulses_per_measure": 8,
+  "initial_state": {
+    "tempo": 180
+  },
+  "parts": {
+    "clave": "|..x.x...|x..x..x.|",
+    "timbales": { "paila": "|x.x.xx.x|x.xx.x.x|" }
+  }
+}

@@ -43,5 +43,6 @@
   "boula hand:T": { "file": "/samples/quinto/quinto-tone.wav" },
   "boula hand:s": { "file": "/samples/quinto/quinto-slap.wav" },
   "boula hand:r": { "file": "/samples/quinto/quinto-rim.wav" },
-  "boula hand:B": { "file": "/samples/quinto/quinto-bass.wav" }
+  "boula hand:B": { "file": "/samples/quinto/quinto-bass.wav" },
+  "timbales:x": { "file": "/samples/timbales/paila.wav" }
 }
