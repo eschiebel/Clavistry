@@ -4,3 +4,4 @@ dist/
 .DS_Store
 bun.lockb
 .env
+tsconfig.tsbuildinfo

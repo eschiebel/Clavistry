@@ -11,7 +11,8 @@
     "check": "tsc --noEmit && biome check .",
     "format": "biome format .",
     "predeploy": "npm run check && npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "test": "vitest"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -19,12 +20,17 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "gh-pages": "^6.3.0",
+    "jsdom": "^29.0.2",
     "typescript": "^5.6.2",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "vitest": "^4.1.4"
   },
   "engines": {
     "node": ">=18"

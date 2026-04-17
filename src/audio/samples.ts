@@ -107,6 +107,40 @@ export function sampleAvailable(key: string): boolean {
   return !!getEntry(key)
 }
 
+// Pre-load all samples for a given set of instruments and strokes.
+// Returns a promise that resolves when all samples are loaded.
+export async function preloadSamples(
+  ctx: AudioContext,
+  instrumentStrokePairs: Array<{instrument: string; stroke: string}>,
+): Promise<void> {
+  // Ensure map is loaded first
+  if (!mapLoaded) {
+    await loadMap()
+  }
+
+  const loadPromises: Promise<void>[] = []
+  for (const {instrument, stroke} of instrumentStrokePairs) {
+    const key = `${instrument}:${stroke}`
+    let entry = getEntry(key)
+    if (!entry) {
+      const idx = instrument.lastIndexOf(' ')
+      if (idx > 0) {
+        const base = instrument.slice(0, idx)
+        entry = getEntry(`${base}:${stroke}`)
+      }
+    }
+    if (entry) {
+      loadPromises.push(
+        loadBuffer(ctx, entry.file).then(() => {
+          // Buffer loaded successfully
+        }),
+      )
+    }
+  }
+
+  await Promise.all(loadPromises)
+}
+
 // Attempt to play a sample. Returns true if scheduled, false if not available yet.
 export function tryPlaySample(
   ctx: AudioContext,

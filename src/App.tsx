@@ -8,7 +8,7 @@ import {
 } from './rhythm/sequence'
 import {triggerVoice, type StrokeSymbol} from './audio/voices'
 import {toBaseName, loadRhythm, getMeterInfo, type SourceMode} from './utils'
-import {tryPlaySample} from './audio/samples'
+import {tryPlaySample, preloadSamples} from './audio/samples'
 import {Mixer} from './components/Mixer'
 import {AboutClavistry} from './components/AboutClavistry'
 import {RhythmView} from './components/RhythmView'
@@ -35,6 +35,7 @@ export default function App() {
   const [forms, setForms] = useState<NonNullable<RhythmJSON['forms']> | null>(null)
   const [selectedFormIdx, setSelectedFormIdx] = useState<number | null>(null)
   const [holdUntil, setHoldUntil] = useState<number | null>(null)
+  const [samplesLoaded, setSamplesLoaded] = useState(true)
   const transportStartRef = useRef<number | null>(null)
   const [aboutOpen, setAboutOpen] = useState(false)
   const pulseRef = useRef(0)
@@ -162,6 +163,7 @@ export default function App() {
   useEffect(() => {
     ;(async () => {
       try {
+        setSamplesLoaded(false)
         const {parsed, initial, raw} = await loadRhythm(selectedRhythmFile)
         setRhythm(parsed)
         setError(null)
@@ -204,9 +206,30 @@ export default function App() {
           setInstrumentSettings({})
           setBpm(DEFAULT_TEMPO)
         }
+
+        // Preload samples for all instruments and strokes in the rhythm
+        const instrumentStrokePairs: Array<{instrument: string; stroke: string}> = []
+        for (const part of parsed.parts) {
+          const strokes = new Set(part.tokens.filter(t => t !== '.' && t !== '|'))
+          for (const stroke of strokes) {
+            instrumentStrokePairs.push({instrument: part.instrument, stroke})
+          }
+        }
+
+        // Initialize audio context if needed for preloading
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new window.AudioContext()
+        }
+        if (audioCtxRef.current.state !== 'running') {
+          await audioCtxRef.current.resume()
+        }
+
+        await preloadSamples(audioCtxRef.current, instrumentStrokePairs)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
+      } finally {
+        setSamplesLoaded(true)
       }
     })()
   }, [selectedRhythmFile])
@@ -596,7 +619,36 @@ export default function App() {
             <option value="coming-soon">More soon...</option>
           </select>
         </label>
-        <button type="button" onClick={start} disabled={started}>
+        <button
+          type="button"
+          onClick={start}
+          disabled={started || !samplesLoaded}
+          style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}
+        >
+          {!samplesLoaded && (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{animation: 'spin 1s linear infinite'}}
+            >
+              <title>Loading samples</title>
+              <style>{`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
+              <path
+                d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
           Start
         </button>
         <button type="button" onClick={stop} disabled={!started}>
