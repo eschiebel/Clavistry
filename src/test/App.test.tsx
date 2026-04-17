@@ -37,6 +37,7 @@ vi.mock('../audio/samples', async () => {
   return {
     ...actual,
     preloadSamples: vi.fn(() => Promise.resolve()),
+    prefetchSamples: vi.fn(() => Promise.resolve()),
   }
 })
 
@@ -53,7 +54,12 @@ class MockAudioContext {
     return {
       connect: vi.fn(),
       disconnect: vi.fn(),
-      gain: {value: 1},
+      gain: {
+        value: 1,
+        setValueAtTime: vi.fn(),
+        linearRampToValueAtTime: vi.fn(),
+        exponentialRampToValueAtTime: vi.fn(),
+      },
     }
   }
 
@@ -91,21 +97,36 @@ describe('App component - samplesLoaded behavior', () => {
     vi.clearAllMocks()
   })
 
-  it('should disable Start button when samples are loading', async () => {
-    const {preloadSamples} = await import('../audio/samples')
-    vi.mocked(preloadSamples).mockImplementation(
+  it('should prefetch samples on initial render', async () => {
+    const {prefetchSamples} = await import('../audio/samples')
+    vi.mocked(prefetchSamples).mockResolvedValue(undefined)
+
+    render(<App />)
+
+    await waitFor(
+      () => {
+        expect(prefetchSamples).toHaveBeenCalled()
+      },
+      {timeout: 2000},
+    )
+  })
+
+  it('should show spinner while prefetching on initial render', async () => {
+    const {prefetchSamples} = await import('../audio/samples')
+    vi.mocked(prefetchSamples).mockImplementation(
       () => new Promise(resolve => setTimeout(resolve, 100)),
     )
 
     render(<App />)
 
-    const startButton = screen.getByRole('button', {name: /start/i})
     await waitFor(() => {
+      const startButton = screen.getByRole('button', {name: /start/i})
+      expect(startButton).toContainHTML('svg')
       expect(startButton).toBeDisabled()
     })
   })
 
-  it('should enable Start button after samples are loaded', async () => {
+  it('should enable Start button on initial render (no preloading)', async () => {
     const {preloadSamples} = await import('../audio/samples')
     vi.mocked(preloadSamples).mockResolvedValue(undefined)
 
@@ -120,21 +141,7 @@ describe('App component - samplesLoaded behavior', () => {
     )
   })
 
-  it('should show spinner in Start button while loading', async () => {
-    const {preloadSamples} = await import('../audio/samples')
-    vi.mocked(preloadSamples).mockImplementation(
-      () => new Promise(resolve => setTimeout(resolve, 100)),
-    )
-
-    render(<App />)
-
-    await waitFor(() => {
-      const startButton = screen.getByRole('button', {name: /start/i})
-      expect(startButton).toContainHTML('svg')
-    })
-  })
-
-  it('should hide spinner after samples are loaded', async () => {
+  it('should not call preloadSamples on initial render', async () => {
     const {preloadSamples} = await import('../audio/samples')
     vi.mocked(preloadSamples).mockResolvedValue(undefined)
 
@@ -142,38 +149,48 @@ describe('App component - samplesLoaded behavior', () => {
 
     await waitFor(
       () => {
-        const startButton = screen.getByRole('button', {name: /start/i})
-        expect(startButton).not.toContainHTML('svg')
+        expect(preloadSamples).not.toHaveBeenCalled()
       },
       {timeout: 2000},
     )
   })
 
-  it('should call preloadSamples with correct instrument-stroke pairs', async () => {
+  it('should decode samples when user clicks Start', async () => {
     const {preloadSamples} = await import('../audio/samples')
     vi.mocked(preloadSamples).mockResolvedValue(undefined)
 
     render(<App />)
+
+    // Wait for initial render
+    await waitFor(
+      () => {
+        const startButton = screen.getByRole('button', {name: /start/i})
+        expect(startButton).not.toBeDisabled()
+      },
+      {timeout: 2000},
+    )
+
+    // Click start
+    const startButton = screen.getByRole('button', {name: /start/i})
+    await userEvent.click(startButton)
 
     await waitFor(
       () => {
         expect(preloadSamples).toHaveBeenCalled()
-        const call = vi.mocked(preloadSamples).mock.calls[0]
-        expect(call[1]).toEqual(
-          expect.arrayContaining([expect.objectContaining({instrument: 'conga', stroke: 'T'})]),
-        )
       },
       {timeout: 2000},
     )
   })
 
-  it('should show spinner when user changes rhythm selection', async () => {
+  it('should show spinner and disable button while decoding on Start click', async () => {
     const {preloadSamples} = await import('../audio/samples')
-    vi.mocked(preloadSamples).mockResolvedValue(undefined)
+    vi.mocked(preloadSamples).mockImplementation(
+      () => new Promise(resolve => setTimeout(resolve, 100)),
+    )
 
     render(<App />)
 
-    // Wait for initial load to complete
+    // Wait for initial render
     await waitFor(
       () => {
         const startButton = screen.getByRole('button', {name: /start/i})
@@ -182,19 +199,44 @@ describe('App component - samplesLoaded behavior', () => {
       {timeout: 2000},
     )
 
-    // Mock a slower preload for rhythm change
-    vi.mocked(preloadSamples).mockImplementation(
-      () => new Promise(resolve => setTimeout(resolve, 100)),
+    // Click start
+    const startButton = screen.getByRole('button', {name: /start/i})
+    await userEvent.click(startButton)
+
+    // Should show spinner and be disabled while loading
+    await waitFor(() => {
+      expect(startButton).toContainHTML('svg')
+      expect(startButton).toBeDisabled()
+    })
+  })
+
+  it('should prefetch samples when user changes rhythm', async () => {
+    const {prefetchSamples} = await import('../audio/samples')
+    vi.mocked(prefetchSamples).mockResolvedValue(undefined)
+
+    render(<App />)
+
+    // Wait for initial render
+    await waitFor(
+      () => {
+        const startButton = screen.getByRole('button', {name: /start/i})
+        expect(startButton).not.toBeDisabled()
+      },
+      {timeout: 2000},
     )
 
-    // Select a different rhythm
+    // Clear the initial call
+    vi.clearAllMocks()
+
+    // Select a different rhythm (user gesture)
     const rhythmSelect = screen.getByRole('combobox')
     await userEvent.selectOptions(rhythmSelect, 'guaguanco.json')
 
-    // Spinner should appear while loading
-    await waitFor(() => {
-      const startButton = screen.getByRole('button', {name: /start/i})
-      expect(startButton).toContainHTML('svg')
-    })
+    await waitFor(
+      () => {
+        expect(prefetchSamples).toHaveBeenCalled()
+      },
+      {timeout: 2000},
+    )
   })
 })

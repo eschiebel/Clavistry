@@ -8,7 +8,7 @@ import {
 } from './rhythm/sequence'
 import {triggerVoice, type StrokeSymbol} from './audio/voices'
 import {toBaseName, loadRhythm, getMeterInfo, type SourceMode} from './utils'
-import {tryPlaySample, preloadSamples} from './audio/samples'
+import {tryPlaySample, preloadSamples, prefetchSamples} from './audio/samples'
 import {Mixer} from './components/Mixer'
 import {AboutClavistry} from './components/AboutClavistry'
 import {RhythmView} from './components/RhythmView'
@@ -86,10 +86,21 @@ export default function App() {
     return 'bembe.json'
   })
 
-  const handleRhythmChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleRhythmChange = useCallback(async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const file = e.target.value
     if (file === 'coming-soon') return
     setSelectedRhythmFile(file)
+
+    // Preload samples after user gesture
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new window.AudioContext()
+    }
+    if (audioCtxRef.current.state !== 'running') {
+      await audioCtxRef.current.resume()
+    }
+
+    // Wait for rhythm to load, then preload samples
+    // This happens after initial load due to isInitialLoadRef
   }, [])
 
   const matrix = useMemo(() => (rhythm ? buildPulseMatrix(rhythm) : null), [rhythm])
@@ -207,7 +218,7 @@ export default function App() {
           setBpm(DEFAULT_TEMPO)
         }
 
-        // Preload samples for all instruments and strokes in the rhythm
+        // Prefetch audio files (no AudioContext needed)
         const instrumentStrokePairs: Array<{instrument: string; stroke: string}> = []
         for (const part of parsed.parts) {
           const strokes = new Set(part.tokens.filter(t => t !== '.' && t !== '|'))
@@ -215,21 +226,11 @@ export default function App() {
             instrumentStrokePairs.push({instrument: part.instrument, stroke})
           }
         }
-
-        // Initialize audio context if needed for preloading
-        if (!audioCtxRef.current) {
-          audioCtxRef.current = new window.AudioContext()
-        }
-        if (audioCtxRef.current.state !== 'running') {
-          await audioCtxRef.current.resume()
-        }
-
-        await preloadSamples(audioCtxRef.current, instrumentStrokePairs)
+        await prefetchSamples(instrumentStrokePairs)
+        setSamplesLoaded(true)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
-      } finally {
-        setSamplesLoaded(true)
       }
     })()
   }, [selectedRhythmFile])
@@ -258,6 +259,21 @@ export default function App() {
     if (audioCtxRef.current.state !== 'running') {
       await audioCtxRef.current.resume()
     }
+
+    // Decode prefetched samples (user gesture)
+    if (rhythm && audioCtxRef.current) {
+      setSamplesLoaded(false)
+      const instrumentStrokePairs: Array<{instrument: string; stroke: string}> = []
+      for (const part of rhythm.parts) {
+        const strokes = new Set(part.tokens.filter(t => t !== '.' && t !== '|'))
+        for (const stroke of strokes) {
+          instrumentStrokePairs.push({instrument: part.instrument, stroke})
+        }
+      }
+      await preloadSamples(audioCtxRef.current, instrumentStrokePairs)
+      setSamplesLoaded(true)
+    }
+
     // Set up master (pre) gain, compressor, and output (post) gain chain to improve loudness
     const ctx = audioCtxRef.current
     if (ctx) {
@@ -563,7 +579,7 @@ export default function App() {
       )
     }
 
-    return <div>Loading rhythm...</div>
+    return <div>Select a rhythm...</div>
   }
 
   return (

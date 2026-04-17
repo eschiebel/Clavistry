@@ -12,6 +12,8 @@ let mapLoadStarted = false
 let sampleMap: Record<string, SampleMapEntry> = {}
 const bufferCache = new Map<string, AudioBuffer>()
 const bufferPromises = new Map<string, Promise<AudioBuffer>>()
+const arrayBufferCache = new Map<string, ArrayBuffer>()
+const arrayBufferPromises = new Map<string, Promise<ArrayBuffer>>()
 
 function dbToLinear(db: number): number {
   return 10 ** (db / 20)
@@ -84,15 +86,40 @@ async function loadBuffer(ctx: AudioContext, path: string): Promise<AudioBuffer>
   const pending = bufferPromises.get(path)
   if (pending) return pending
   const p = (async () => {
-    const res = await fetch(withBase(path))
-    if (!res.ok) throw new Error(`Failed to fetch sample ${path}: ${res.status}`)
-    const arr = await res.arrayBuffer()
+    // Check if we have a prefetched ArrayBuffer
+    const arrayBuffer = arrayBufferCache.get(path)
+    let arr: ArrayBuffer
+    if (arrayBuffer) {
+      arr = arrayBuffer
+    } else {
+      // Fetch if not prefetched
+      const res = await fetch(withBase(path))
+      if (!res.ok) throw new Error(`Failed to fetch sample ${path}: ${res.status}`)
+      arr = await res.arrayBuffer()
+    }
     const buf = await ctx.decodeAudioData(arr)
     bufferCache.set(path, buf)
     bufferPromises.delete(path)
     return buf
   })()
   bufferPromises.set(path, p)
+  return p
+}
+
+async function fetchArrayBuffer(path: string): Promise<ArrayBuffer> {
+  const existing = arrayBufferCache.get(path)
+  if (existing) return existing
+  const pending = arrayBufferPromises.get(path)
+  if (pending) return pending
+  const p = (async () => {
+    const res = await fetch(withBase(path))
+    if (!res.ok) throw new Error(`Failed to fetch sample ${path}: ${res.status}`)
+    const arr = await res.arrayBuffer()
+    arrayBufferCache.set(path, arr)
+    arrayBufferPromises.delete(path)
+    return arr
+  })()
+  arrayBufferPromises.set(path, p)
   return p
 }
 
@@ -107,8 +134,42 @@ export function sampleAvailable(key: string): boolean {
   return !!getEntry(key)
 }
 
+// Prefetch audio files as ArrayBuffers (no AudioContext needed).
+// Can be called on page load and rhythm change without user gesture.
+export async function prefetchSamples(
+  instrumentStrokePairs: Array<{instrument: string; stroke: string}>,
+): Promise<void> {
+  // Ensure map is loaded first
+  if (!mapLoaded) {
+    await loadMap()
+  }
+
+  const fetchPromises: Promise<void>[] = []
+  for (const {instrument, stroke} of instrumentStrokePairs) {
+    const key = `${instrument}:${stroke}`
+    let entry = getEntry(key)
+    if (!entry) {
+      const idx = instrument.lastIndexOf(' ')
+      if (idx > 0) {
+        const base = instrument.slice(0, idx)
+        entry = getEntry(`${base}:${stroke}`)
+      }
+    }
+    if (entry) {
+      fetchPromises.push(
+        fetchArrayBuffer(entry.file).then(() => {
+          // ArrayBuffer fetched successfully
+        }),
+      )
+    }
+  }
+
+  await Promise.all(fetchPromises)
+}
+
 // Pre-load all samples for a given set of instruments and strokes.
 // Returns a promise that resolves when all samples are loaded.
+// This function requires AudioContext and should be called after user gesture.
 export async function preloadSamples(
   ctx: AudioContext,
   instrumentStrokePairs: Array<{instrument: string; stroke: string}>,
