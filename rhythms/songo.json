@@ -4,6 +4,10 @@
   "pulses_per_measure": 8,
   "parts": {
     "clave": "|x..x...x|..x.x...|",
+    "palitos": {
+      "left": "|.x.x.x.x|..x..x.x|",
+      "right": "|x...x...|x...x...|"
+    },
     "quinto": {
       "left": "|p.t.pt..|pt.t.T..|",
       "right": "|.T.s..ss|..s.T...|"
@@ -16,6 +20,7 @@
     "tempo": 180,
     "mixer": {
       "clave": { "vol": 1.0, "mute": false },
+      "palitos": { "vol": 0.75, "mute": false },
       "quinto": { "vol": 1.0, "mute": false },
       "conga": { "vol": 1.0, "mute": false }
     }
