@@ -239,4 +239,43 @@ describe('App component - samplesLoaded behavior', () => {
       {timeout: 2000},
     )
   })
+
+  it('should toggle between Start and Stop button text', async () => {
+    const {preloadSamples} = await import('../audio/samples')
+    vi.mocked(preloadSamples).mockResolvedValue(undefined)
+
+    render(<App />)
+
+    // Wait for initial render
+    await waitFor(
+      () => {
+        const startButton = screen.getByRole('button', {name: /start/i})
+        expect(startButton).not.toBeDisabled()
+      },
+      {timeout: 2000},
+    )
+
+    // Button should show "Start" initially
+    const toggleButton = screen.getByRole('button', {name: /start/i})
+    expect(toggleButton).toHaveTextContent('Start')
+
+    // Click to start
+    await userEvent.click(toggleButton)
+
+    // Button should now show "Stop"
+    await waitFor(() => {
+      const stopButton = screen.getByRole('button', {name: /stop/i})
+      expect(stopButton).toHaveTextContent('Stop')
+    })
+
+    // Click to stop
+    const stopButton = screen.getByRole('button', {name: /stop/i})
+    await userEvent.click(stopButton)
+
+    // Button should show "Start" again
+    await waitFor(() => {
+      const startButton = screen.getByRole('button', {name: /start/i})
+      expect(startButton).toHaveTextContent('Start')
+    })
+  })
 })

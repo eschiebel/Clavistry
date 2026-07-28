@@ -638,8 +638,8 @@ export default function App() {
         </label>
         <button
           type="button"
-          onClick={start}
-          disabled={started || !samplesLoaded}
+          onClick={started ? stop : start}
+          disabled={!samplesLoaded}
           style={{display: 'inline-flex', alignItems: 'center', gap: '6px'}}
         >
           {!samplesLoaded && (
@@ -666,10 +666,7 @@ export default function App() {
               />
             </svg>
           )}
-          Start
-        </button>
-        <button type="button" onClick={stop} disabled={!started}>
-          Stop
+          {started ? 'Stop' : 'Start'}
         </button>
 
         <label style={{display: 'inline-flex', gap: 6, alignItems: 'center'}}>
